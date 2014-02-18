@@ -111,7 +111,7 @@ void ofxTLAudioTrack::draw(){
 	}
 		
 	if(shouldRecomputePreview || viewIsDirty){
-//		cout << "recomputing waveform for audio file " << getSoundfilePath() << endl;
+		cout << "recomputing waveform for audio file " << getSoundfilePath() << endl;
 		recomputePreview();
 	}
 

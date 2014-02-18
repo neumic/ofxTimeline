@@ -587,7 +587,6 @@ void ofxTLPage::evenlyDistributeTrackHeights(){
 		heightBeforeCollapse = 0;
 	}
 
-	cout << endl;
 }
 
 void ofxTLPage::collapseAllTracks(bool excludeFocusTrack){
