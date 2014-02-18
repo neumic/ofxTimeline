@@ -46,6 +46,7 @@ class ofxTLColors
 	ofColor backgroundColor;
 	ofColor keyColor;
 	ofColor textColor;
+   ofColor trackTitleBackgroundColor;
 	ofColor highlightColor;
 	ofColor disabledColor;
 	ofColor modalBackgroundColor;

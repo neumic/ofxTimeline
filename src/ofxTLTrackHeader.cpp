@@ -99,11 +99,16 @@ void ofxTLTrackHeader::draw(){
 	
 	ofPushStyle();
 	
+   ofFill();
+
 	if(track->hasFocus()){
-		ofFill();
 		ofSetColor(timeline->getColors().highlightColor, 50);
-		ofRect(bounds.x, bounds.y, bounds.width, bounds.height);
 	}
+   else{
+		ofSetColor(timeline->getColors().trackTitleBackgroundColor, 50);
+   }
+
+   ofRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
 	// TODO: set these somewhere else instead of setting it every frame here
     // set name if it's empty and we're not editing

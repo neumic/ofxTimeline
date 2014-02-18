@@ -51,6 +51,12 @@ void ofxTLColors::load(string colorFile) {
                               settings.getValue("colors:background:b", 53),
                               settings.getValue("colors:background:a", 255));
 
+
+    trackTitleBackgroundColor = ofColor(settings.getValue("colors:background:r", 0),
+                              settings.getValue("colors:background:g", 0),
+                              settings.getValue("colors:background:b", 255),
+                              settings.getValue("colors:background:a", 255));
+
     textColor = ofColor(settings.getValue("colors:text:r", 255),
                         settings.getValue("colors:text:g", 255),
                         settings.getValue("colors:text:b", 255),
