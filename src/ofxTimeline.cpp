@@ -1003,7 +1003,7 @@ void ofxTimeline::setHeight(float height){
 		updatePagePositions();
         ofEventArgs args;
         ofNotifyEvent(events().viewWasResized, args);
-		cout << "desired height was " << height << " resulting height " << totalDrawRect.height << endl;
+		//cout << "desired height was " << height << " resulting height " << totalDrawRect.height << endl;
 	}
 }
 

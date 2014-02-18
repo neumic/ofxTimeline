@@ -48,6 +48,8 @@
 #include OFX_TIMELINE_FONT_INCLUDE
 #endif
 
+#define TIMELINE_AUDIO_INCLUDED
+
 //external addons
 #include "ofRange.h"
 #include "ofxMSATimer.h"
