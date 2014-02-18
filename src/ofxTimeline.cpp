@@ -997,7 +997,7 @@ void ofxTimeline::setWidth(float newWidth){
 void ofxTimeline::setHeight(float height){
 	if(height != totalDrawRect.height){
 		float staticHeight = totalDrawRect.height - currentPage->getDrawRect().height;
-		cout << "the static height is " << staticHeight << endl;
+		//cout << "the static height is " << staticHeight << endl;
 		currentPage->setExpandToHeight(height - staticHeight);
 		currentPage->evenlyDistributeTrackHeights();
 		updatePagePositions();
