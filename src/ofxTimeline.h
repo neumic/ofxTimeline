@@ -66,6 +66,7 @@
 #include "ofxTLBangs.h"
 #include "ofxTLFlags.h"
 #include "ofxTLSwitches.h"
+#include "ofxTLAudioSwitches.h"
 #include "ofxTLColorTrack.h"
 #include "ofxTLImageSequence.h"
 #include "ofxTLColors.h"
@@ -352,6 +353,12 @@ class ofxTimeline : ofThread {
 	bool isSwitchOn(string name);
 	bool isSwitchOn(string name, float atTime);
 	bool isSwitchOn(string name, int atFrame);
+
+    ofxTLAudioSwitches* addAudioSwitches(string name);
+	ofxTLAudioSwitches* addAudioSwitches(string name, string audioPath);
+	bool isAudioSwitchOn(string name);
+	bool isAudioSwitchOn(string name, float atTime);
+	bool isAudioSwitchOn(string name, int atFrame);
 	
     ofxTLBangs* addBangs(string name);
 	ofxTLBangs* addBangs(string name, string xmlFileName);

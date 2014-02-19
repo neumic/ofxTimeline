@@ -1787,42 +1787,50 @@ ofxTLPage* ofxTimeline::getPage(string pageName){
 }
 
 
-ofxTLSwitches* ofxTimeline::addSwitches(string trackName){
-    string uniqueName = confirmedUniqueName(trackName);
-	return addSwitches(uniqueName, nameToXMLName(uniqueName));
+ofxTLAudioSwitches* ofxTimeline::addAudioSwitches(string trackName){
+	return addAudioSwitches(trackName, "");
 }
 
-ofxTLSwitches* ofxTimeline::addSwitches(string trackName, string xmlFileName){
-	ofxTLSwitches* newSwitches = new ofxTLSwitches();
+ofxTLAudioSwitches* ofxTimeline::addAudioSwitches(string trackName, string audioPath){
+    string uniqueName = confirmedUniqueName(trackName);
+
+	ofxTLAudioSwitches* newSwitches = new ofxTLAudioSwitches();
 	newSwitches->setCreatedByTimeline(true);
-	newSwitches->setXMLFileName(xmlFileName);
-	addTrack(confirmedUniqueName(trackName), newSwitches);
+	newSwitches->setXMLFileName(nameToXMLName(uniqueName) );
+	addTrack(uniqueName, newSwitches);
+
+    if(audioPath != ""){
+        if(!newSwitches->loadSoundfile(audioPath)){
+            ofLogError("ofxTimeline::addAudioSwitches -- audio file " + audioPath + " failed to load. Use only WAV and AIFF files");
+        }
+    }
+
 	return newSwitches;
 }
 
-bool ofxTimeline::isSwitchOn(string trackName, float atTime){
+bool ofxTimeline::isAudioSwitchOn(string trackName, float atTime){
 	if(!hasTrack(trackName)){
 		ofLogError("ofxTimeline -- Couldn't find switcher track " + trackName);
 		return false;
 	}
 	
-	ofxTLSwitches* switches = (ofxTLSwitches*)trackNameToPage[trackName]->getTrack(trackName);
+	ofxTLAudioSwitches* switches = (ofxTLAudioSwitches*)trackNameToPage[trackName]->getTrack(trackName);
     return switches->isOnAtPercent(atTime/durationInSeconds);
 }
 
-bool ofxTimeline::isSwitchOn(string trackName){
+bool ofxTimeline::isAudioSwitchOn(string trackName){
 	if(!hasTrack(trackName)){
 		ofLogError("ofxTimeline -- Couldn't find switcher track " + trackName);
 		return false;
 	}
 	
-	ofxTLSwitches* switches = (ofxTLSwitches*)trackNameToPage[trackName]->getTrack(trackName);
+	ofxTLAudioSwitches* switches = (ofxTLAudioSwitches*)trackNameToPage[trackName]->getTrack(trackName);
 	return switches->isOn();
 //    return isSwitchOn(trackName, currentTime);
 }
 
-bool ofxTimeline::isSwitchOn(string trackName, int atFrame){
-	return isSwitchOn(trackName, timecode.secondsForFrame(atFrame));	
+bool ofxTimeline::isAudioSwitchOn(string trackName, int atFrame){
+	return isAudioSwitchOn(trackName, timecode.secondsForFrame(atFrame));	
 }
 
 ofxTLBangs* ofxTimeline::addBangs(string trackName){
