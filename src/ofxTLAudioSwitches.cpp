@@ -73,24 +73,14 @@ void ofxTLAudioSwitches::update(){
     for(int i = 0; i < keyframes.size(); i++){
         ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
         
-        // switch turns on
-        if(timeline->getInOutRangeMillis().contains(switchKey->time) &&
-           lastTimelinePoint <= switchKey->time &&
-           thisTimelinePoint >= switchKey->time &&
-           thisTimelinePoint != lastTimelinePoint)
-        {
-            switchStateChanged(keyframes[i]);
-        }
-        
-        // switch turns off
-        if(timeline->getInOutRangeMillis().contains(switchKey->timeRange.max) &&
-           lastTimelinePoint <= switchKey->timeRange.max &&
-           thisTimelinePoint >= switchKey->timeRange.max &&
-           thisTimelinePoint != lastTimelinePoint)
-        {
-            switchStateChanged(keyframes[i]);
+        if( timeline->getInOutRangeMillis().intersects(switchKey->timeRange) ){
+            if( switchKey->timeRange.contains( lastTimelinePoint ) != 
+                switchKey->timeRange.contains( thisTimelinePoint ) ) {
+               switchStateChanged(keyframes[i]);
+            }
         }
     }
+        
     lastTimelinePoint = thisTimelinePoint;
 }
 
@@ -102,7 +92,12 @@ void ofxTLAudioSwitches::switchStateChanged(ofxTLKeyframe* key){
     args.switchName = ((ofxTLAudioSwitch*)key)->textField.text;
     ofNotifyEvent(events().switched, args);
 
-    cerr << "switchStateChanged: getIsPlaying == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn == " << isOn() <<endl;
+    //cerr << "switchStateChanged: getIsPlaying == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn == " << isOn() <<endl;
+    if( !player.getIsPlaying() ){
+        player.setPositionMS( positionFromMillis(currentTrackTime() ) );
+    } else {
+        player.stop();
+    }
 }
 
 void ofxTLAudioSwitches::draw(){
