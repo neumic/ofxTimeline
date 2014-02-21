@@ -152,6 +152,7 @@ void ofxTimeline::setup(){
 	}
 	zoomer = new ofxTLZoomer();
 	zoomer->setTimeline(this);
+   zoomer->setup();
 	zoomer->setDrawRect(ofRectangle(offset.y, ticker->getBottomEdge(), width, ZOOMER_HEIGHT));
 	
 	colors.load();
