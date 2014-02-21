@@ -43,6 +43,7 @@ ofxTLZoomer::ofxTLZoomer()
 	zoomExponent(2.0)
 {
 	//default constructor
+    xmlFileName = "_zoomer.xml";
 }
 
 ofxTLZoomer::~ofxTLZoomer(){
