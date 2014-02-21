@@ -58,6 +58,7 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
 
 	virtual bool loadSoundfile(string filepath);
 	virtual bool isSoundLoaded();
+    virtual bool getIsPlaying();
 
     virtual void draw();
 
@@ -115,6 +116,9 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
     //from audioTrack
 	ofOpenALSoundPlayer_TimelineAdditions player;
 
+    bool playOnUpdate;
+    bool stopOnUpdate;
+    bool trackIsPlaying;
 	float positionForSecond(float second);
     bool soundLoaded;
 	bool shouldRecomputePreview;

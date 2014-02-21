@@ -44,6 +44,10 @@ ofxTLAudioSwitches::ofxTLAudioSwitches(){
     soundLoaded = false;
 	lastFFTPosition = -1;
 	defaultSpectrumBandwidth = 1024;
+    trackIsPlaying = 0;
+
+    playOnUpdate = false;
+    stopOnUpdate = false;
 
 }
 
@@ -76,11 +80,37 @@ void ofxTLAudioSwitches::update(){
         if( timeline->getInOutRangeMillis().intersects(switchKey->timeRange) ){
             if( switchKey->timeRange.contains( lastTimelinePoint ) != 
                 switchKey->timeRange.contains( thisTimelinePoint ) ) {
-               switchStateChanged(keyframes[i]);
+                switchStateChanged(keyframes[i]);
+                if( getIsPlaying() ){
+                    //I'm definitely trying to be too clever here.
+                    playOnUpdate = playOnUpdate || switchKey->timeRange.contains( thisTimelinePoint );
+                    stopOnUpdate = stopOnUpdate || switchKey->timeRange.contains( lastTimelinePoint );
+                }
             }
         }
     }
-        
+
+    //crude.  Need some better way of keeping a skip from one switch to another
+    //from double playing.
+    if( playOnUpdate && stopOnUpdate ){
+        playOnUpdate = false;
+        stopOnUpdate = false;
+    }
+    else if( playOnUpdate ) {
+        if( isSoundLoaded() ){
+            player.setPositionMS( positionFromMillis(currentTrackTime() ) );
+        }
+        if(!player.getIsPlaying() ){
+            player.play(); 
+        }
+        playOnUpdate = false;
+    }
+    else if( stopOnUpdate ){
+        if( player.getIsPlaying() && isSoundLoaded() ){
+            player.stop();
+        }
+        stopOnUpdate = false;
+    }
     lastTimelinePoint = thisTimelinePoint;
 }
 
@@ -92,12 +122,13 @@ void ofxTLAudioSwitches::switchStateChanged(ofxTLKeyframe* key){
     args.switchName = ((ofxTLAudioSwitch*)key)->textField.text;
     ofNotifyEvent(events().switched, args);
 
-    //cerr << "switchStateChanged: getIsPlaying == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn == " << isOn() <<endl;
-    if( !player.getIsPlaying() ){
-        player.setPositionMS( positionFromMillis(currentTrackTime() ) );
-    } else {
-        player.stop();
-    }
+    cerr << "switchStateChanged: getIsPlaying == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn == " << isOn() <<endl;
+
+}
+
+bool ofxTLAudioSwitches::getIsPlaying(){
+//return whether the track, _not_ the player, is playing
+   return trackIsPlaying;
 }
 
 void ofxTLAudioSwitches::draw(){
@@ -264,19 +295,17 @@ float ofxTLAudioSwitches::positionFromMillis( long millis ){
 void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
 	ofxTLTrack::playbackStarted(args);
     cerr << "playbackStarted(): getIsPlaying() == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn() == " << isOn() <<endl;
-	if(isSoundLoaded() ){
-        if( isOn() ){
-            player.setPositionMS( positionFromMillis(currentTrackTime() ) );
-			player.play();
-		}
-	}
+
+    if( isOn() ){
+        playOnUpdate = true;
+    }
+    trackIsPlaying = true;
 }
 
 void ofxTLAudioSwitches::playbackEnded(ofxTLPlaybackEventArgs& args){
     cerr << "playbackEnded(): getIsPlaying() == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn() == " << isOn() <<endl;
-	if( isSoundLoaded() ){
-		player.stop();
-	}
+    stopOnUpdate = true;
+    trackIsPlaying = false;
 }
 
 bool ofxTLAudioSwitches::mousePressed(ofMouseEventArgs& args, long millis){
@@ -540,6 +569,13 @@ void ofxTLAudioSwitches::updateTimeRanges(){
             switchKey->startSelected = switchKey->endSelected;
             switchKey->endSelected = tempSelect;
         }
+    }
+
+    if( isOn() && getIsPlaying() ){
+        playOnUpdate = true;
+    }
+    else if( !isOn() && getIsPlaying() ){
+        stopOnUpdate = true;
     }
 	
     //TODO: no overlaps!!
