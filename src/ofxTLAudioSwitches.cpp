@@ -242,6 +242,24 @@ void ofxTLAudioSwitches::draw(){
     
     */
     ofPopStyle();
+
+	if(shouldRecomputePreview || viewIsDirty){
+        cerr << "recomputing preview" <<endl;
+		recomputePreview();
+	}
+
+    ofPushStyle();
+    ofSetColor(timeline->getColors().keyColor);
+    ofNoFill();
+    
+    for(int i = 0; i < previews.size(); i++){
+        ofPushMatrix();
+        ofTranslate( normalizedXtoScreenX(computedZoomBounds.min, zoomBounds) - normalizedXtoScreenX(zoomBounds.min, zoomBounds), 0, 0);
+        ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
+        previews[i].draw();
+        ofPopMatrix();
+    }
+    ofPopStyle();
 }
 
 bool ofxTLAudioSwitches::isOnAtMillis(long millis){
@@ -289,6 +307,86 @@ float ofxTLAudioSwitches::positionFromMillis( long millis ){
     else{
         return -1.0;
     }
+}
+
+void ofxTLAudioSwitches::recomputePreview(){
+	
+	previews.clear();
+	
+//	cout << "recomputing view with zoom bounds of " << zoomBounds << endl;
+	
+	float normalizationRatio = timeline->getDurationInSeconds() / player.getDuration(); //need to figure this out for framebased...but for now we are doing time based
+	float trackHeight = bounds.height/(1+player.getNumChannels());
+	int numSamples = player.getBuffer().size() / player.getNumChannels();
+	int pixelsPerSample = numSamples / bounds.width;
+	int numChannels = player.getNumChannels();
+	vector<short> & buffer  = player.getBuffer();
+
+	for(int c = 0; c < numChannels; c++){
+		ofPolyline preview;
+		int lastFrameIndex = 0;
+		preview.resize(bounds.width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
+		for(float i = bounds.x; i < bounds.x+bounds.width; i++){
+			float pointInTrack = screenXtoNormalizedX( i ) * normalizationRatio; //will scale the screenX into wave's 0-1.0
+			float trackCenter = bounds.y + trackHeight * (c+1);
+			
+			ofPoint * vertex = & preview.getVertices()[ (i - bounds.x) * 2];
+			
+			if(pointInTrack >= 0 && pointInTrack <= 1.0){
+				//draw sample at pointInTrack * waveDuration;
+				int frameIndex = pointInTrack * numSamples;					
+				float losample = 0;
+				float hisample = 0;
+				for(int f = lastFrameIndex; f < frameIndex; f++){
+					int sampleIndex = f * numChannels + c;
+					float subpixelSample = buffer[sampleIndex]/32565.0;
+					if(subpixelSample < losample) {
+						losample = subpixelSample;
+					}
+					if(subpixelSample > hisample) {
+						hisample = subpixelSample;
+					}
+				}
+				
+				if(losample == 0 && hisample == 0){
+					//preview.addVertex(i, trackCenter);
+					vertex->x = i;
+					vertex->y = trackCenter;
+					vertex++;
+				}
+				else {
+					if(losample != 0){
+//						preview.addVertex(i, trackCenter - losample * trackHeight);
+						vertex->x = i;
+						vertex->y = trackCenter - losample * trackHeight*.5;
+						vertex++;
+					}
+					if(hisample != 0){
+						//ofVertex(i, trackCenter - hisample * trackHeight);
+//						preview.addVertex(i, trackCenter - hisample * trackHeight);
+						vertex->x = i;
+						vertex->y = trackCenter - hisample * trackHeight*.5;
+						vertex++;
+					}
+				}
+				
+				while (vertex < & preview.getVertices()[ (i - bounds.x) * 2] + 2) {
+					*vertex = *(vertex-1);
+					vertex++;
+				}
+
+				lastFrameIndex = frameIndex;
+			}
+			else{
+				*vertex++ = ofPoint(i,trackCenter);
+				*vertex++ = ofPoint(i,trackCenter);
+			}
+		}
+		preview.simplify();
+		previews.push_back(preview);
+	}
+	computedZoomBounds = zoomBounds;
+	shouldRecomputePreview = false;
 }
 
 

@@ -122,8 +122,9 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
 	float positionForSecond(float second);
     bool soundLoaded;
 	bool shouldRecomputePreview;
-	//vector<ofPolyline> previews;
+	vector<ofPolyline> previews;
 	void recomputePreview();
+	ofRange computedZoomBounds;
 	string soundFilePath;
 	float lastFFTPosition;
 	int defaultSpectrumBandwidth;
