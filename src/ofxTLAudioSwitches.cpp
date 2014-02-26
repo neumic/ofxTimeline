@@ -147,12 +147,22 @@ void ofxTLAudioSwitches::draw(){
         ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
         float startScreenX = MAX(millisToScreenX(switchKey->timeRange.min), 0);
         float endScreenX = MIN(millisToScreenX(switchKey->timeRange.max), bounds.getMaxX());
-		if(startScreenX == endScreenX){
+		if(startScreenX >= endScreenX){
 			continue;
 		}
 
         if(switchKey->shouldRecomputePreview || viewIsDirty){
-            recomputePreview(switchKey);
+            //TODO: XXX: Dear lord, fix this monstrosity!!
+            ofRange posVisRange = ofFloatRange( 
+                            ofMap( startScreenX, 
+                                   millisToScreenX(switchKey->timeRange.min),
+                                   millisToScreenX(switchKey->timeRange.min + player.getDuration() * 1000),
+                                   0.0, 1.0 ),
+                            ofMap( endScreenX, 
+                                   millisToScreenX(switchKey->timeRange.min),
+                                   millisToScreenX(switchKey->timeRange.min + player.getDuration() * 1000),
+                                   0.0, 1.0 ) );
+            recomputePreview(switchKey, endScreenX - startScreenX, posVisRange);
         }
 
 		switchKey->display = ofRectangle(startScreenX, bounds.y, endScreenX-startScreenX, bounds.height);
@@ -287,7 +297,7 @@ float ofxTLAudioSwitches::positionFromMillis( long millis ){
     }
 }
 
-void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch ){
+void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange){
 	
 	audioSwitch->previews.clear();
 	
@@ -296,16 +306,18 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch ){
 	float normalizationRatio = timeline->getDurationInSeconds() / player.getDuration(); //need to figure this out for framebased...but for now we are doing time based
 	float trackHeight = bounds.height/(1+player.getNumChannels());
 	int numSamples = player.getBuffer().size() / player.getNumChannels();
-	int pixelsPerSample = numSamples / bounds.width;
 	int numChannels = player.getNumChannels();
 	vector<short> & buffer  = player.getBuffer();
 
 	for(int c = 0; c < numChannels; c++){
 		ofPolyline preview;
 		int lastFrameIndex = 0;
-		preview.resize(bounds.width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
-		for(float i = 0; i < bounds.width; i++){
-			float pointInTrack = screenXtoNormalizedX( i ) * normalizationRatio; //will scale the screenX into wave's 0-1.0
+        cerr<<width<<endl;
+		preview.resize(width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
+		for(int i = 0; i < width; i++){
+			//float pointInTrack = screenXtoNormalizedX( i ) * normalizationRatio; //will scale the screenX into wave's 0-1.0
+            float pointInTrack = ofMap( i, 0, width, posVisRange.min, posVisRange.max );
+            cerr<<"pointInTrack = "<<pointInTrack<<endl;
 			float trackCenter = bounds.y + trackHeight * (c+1);
 			
 			ofPoint * vertex = & preview.getVertices()[ i * 2 ];

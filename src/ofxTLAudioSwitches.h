@@ -124,7 +124,7 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
     bool trackIsPlaying;
 	float positionForSecond(float second);
     bool soundLoaded;
-	void recomputePreview(ofxTLAudioSwitch* audioSwitch);
+	void recomputePreview(ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange);
 	ofRange computedZoomBounds;
 	string soundFilePath;
 	float lastFFTPosition;
