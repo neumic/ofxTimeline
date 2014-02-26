@@ -52,6 +52,10 @@ class ofxTLAudioSwitch : public ofxTLKeyframe {
 
 	bool shouldRecomputePreview;
 	vector<ofPolyline> previews;
+
+	ofOpenALSoundPlayer_TimelineAdditions player;
+    string soundFilePath;
+    bool soundLoaded;
 };
 
 class ofxTLAudioSwitches : public ofxTLKeyframes {
@@ -116,17 +120,13 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
     ofxTLAudioSwitch* clickedTextField;
     bool enteringText;
     
-    //from audioTrack
-	ofOpenALSoundPlayer_TimelineAdditions player;
 
     bool playOnUpdate;
     bool stopOnUpdate;
     bool trackIsPlaying;
 	float positionForSecond(float second);
-    bool soundLoaded;
 	void recomputePreview(ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange);
 	ofRange computedZoomBounds;
-	string soundFilePath;
 	float lastFFTPosition;
 	int defaultSpectrumBandwidth;
     int averageSize;

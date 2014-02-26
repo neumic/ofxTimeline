@@ -40,7 +40,6 @@ ofxTLAudioSwitches::ofxTLAudioSwitches(){
     enteringText = false;
 	clickedTextField = NULL;
 
-    soundLoaded = false;
 	lastFFTPosition = -1;
 	defaultSpectrumBandwidth = 1024;
     trackIsPlaying = 0;
@@ -55,23 +54,25 @@ ofxTLAudioSwitches::~ofxTLAudioSwitches(){
 }
 
 bool ofxTLAudioSwitches::loadSoundfile(string filepath){
-	soundLoaded = false;
-	if(player.loadSound(filepath, false)){
-    	soundLoaded = true;
-		soundFilePath = filepath;
-        player.getSpectrum(defaultSpectrumBandwidth);
-        player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
-        averageSize = player.getAverages().size();
-        for( int i = 0; i < keyframes.size(); i++ ){
-            ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
-		    switchKey->shouldRecomputePreview = true;
-        }
+    ofxTLAudioSwitch* switchKey = new ofxTLAudioSwitch();
+    switchKey->time = 0;
+	switchKey->soundLoaded = false;
+    
+	if(switchKey->player.loadSound(filepath, false)){
+    	switchKey->soundLoaded = true;
+		switchKey->soundFilePath = filepath;
+        switchKey->player.getSpectrum(defaultSpectrumBandwidth);
+        switchKey->player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
+        switchKey->shouldRecomputePreview = true;
+        switchKey->timeRange = ofLongRange( 0, switchKey->player.getDuration() *1000 );
+        keyframes.push_back(switchKey);
+		updateKeyframeSort();
     }
-	return soundLoaded;
+	return switchKey->soundLoaded;
 }
 
 bool ofxTLAudioSwitches::isSoundLoaded(){
-	return soundLoaded;
+	return false;
 }
 
 void ofxTLAudioSwitches::update(){
@@ -84,14 +85,24 @@ void ofxTLAudioSwitches::update(){
                 switchKey->timeRange.contains( thisTimelinePoint ) ) {
                 switchStateChanged(keyframes[i]);
                 if( getIsPlaying() ){
-                    //I'm definitely trying to be too clever here.
-                    playOnUpdate = playOnUpdate || switchKey->timeRange.contains( thisTimelinePoint );
-                    stopOnUpdate = stopOnUpdate || switchKey->timeRange.contains( lastTimelinePoint );
+                    if( switchKey->timeRange.contains( thisTimelinePoint ) ){
+                        if( switchKey->soundLoaded ){
+                           switchKey->player.setPositionMS( positionFromMillis(currentTrackTime() ) );
+                        }
+                        if( !switchKey->player.getIsPlaying() ) {
+                           switchKey->player.play();
+                        }
+                    }
+                    else if( switchKey->timeRange.contains( lastTimelinePoint ) ) {
+                        if( switchKey->soundLoaded && switchKey->player.getIsPlaying() ){
+                           switchKey->player.stop();
+                        }
+                    }
                 }
             }
         }
     }
-
+    /*
     //crude.  Need some better way of keeping a skip from one switch to another
     //from double playing.
     if( playOnUpdate && stopOnUpdate ){
@@ -113,6 +124,7 @@ void ofxTLAudioSwitches::update(){
         }
         stopOnUpdate = false;
     }
+    */
     lastTimelinePoint = thisTimelinePoint;
 }
 
@@ -152,20 +164,6 @@ void ofxTLAudioSwitches::draw(){
 		if(startScreenX >= endScreenX){
 			continue;
 		}
-
-        if(switchKey->shouldRecomputePreview || viewIsDirty){
-            //TODO: XXX: Dear lord, fix this monstrosity!!
-            ofRange posVisRange = ofFloatRange( 
-                            ofMap( startScreenX, 
-                                   millisToScreenX(switchKey->timeRange.min),
-                                   millisToScreenX(switchKey->timeRange.min + player.getDuration() * 1000),
-                                   0.0, 1.0 ),
-                            ofMap( endScreenX, 
-                                   millisToScreenX(switchKey->timeRange.min),
-                                   millisToScreenX(switchKey->timeRange.min + player.getDuration() * 1000),
-                                   0.0, 1.0 ) );
-            recomputePreview(switchKey, endScreenX - startScreenX, posVisRange);
-        }
 
 		switchKey->display = ofRectangle(startScreenX, bounds.y, endScreenX-startScreenX, bounds.height);
 
@@ -232,17 +230,32 @@ void ofxTLAudioSwitches::draw(){
             }
         }
         ofRect(switchKey->display);
-        //ofSetColor(timeline->getColors().keyColor);
-        ofSetColor(ofColor( 50, 50, 50, 50 ));
 
-        //draw preview
-        for(int i = 0; i < switchKey->previews.size(); i++){
-            ofPushMatrix();
-            ofTranslate( startScreenX, 0, 0);
-            ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
-            switchKey->previews[i].draw();
-            ofPopMatrix();
-        }
+        if( switchKey->soundLoaded ){
+           ofSetColor(ofColor( 50, 50, 50, 50 ));
+           if(switchKey->shouldRecomputePreview || viewIsDirty){
+               //TODO: XXX: Dear lord, fix this monstrosity!!
+               ofRange posVisRange = ofFloatRange( 
+                               ofMap( startScreenX, 
+                                      millisToScreenX(switchKey->timeRange.min),
+                                      millisToScreenX(switchKey->timeRange.min + switchKey->player.getDuration() * 1000),
+                                      0.0, 1.0 ),
+                               ofMap( endScreenX, 
+                                      millisToScreenX(switchKey->timeRange.min),
+                                      millisToScreenX(switchKey->timeRange.min + switchKey->player.getDuration() * 1000),
+                                      0.0, 1.0 ) );
+               recomputePreview(switchKey, endScreenX - startScreenX, posVisRange);
+           }
+
+           //draw preview
+           for(int i = 0; i < switchKey->previews.size(); i++){
+               ofPushMatrix();
+               ofTranslate( startScreenX, 0, 0);
+               ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
+               switchKey->previews[i].draw();
+               ofPopMatrix();
+           }
+       }
     }
     
     ofPopStyle();
@@ -301,10 +314,10 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
 	
 //	cout << "recomputing view with zoom bounds of " << zoomBounds << endl;
 	
-	float trackHeight = bounds.height/(1+player.getNumChannels());
-	int numSamples = player.getBuffer().size() / player.getNumChannels();
-	int numChannels = player.getNumChannels();
-	vector<short> & buffer  = player.getBuffer();
+	float trackHeight = bounds.height/(1+audioSwitch->player.getNumChannels());
+	int numChannels = audioSwitch->player.getNumChannels();
+	vector<short> & buffer  = audioSwitch->player.getBuffer();
+	int numSamples = buffer.size() / numChannels;
 
 	for(int c = 0; c < numChannels; c++){
 		ofPolyline preview;
