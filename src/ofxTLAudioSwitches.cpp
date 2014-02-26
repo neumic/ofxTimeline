@@ -59,10 +59,13 @@ bool ofxTLAudioSwitches::loadSoundfile(string filepath){
 	if(player.loadSound(filepath, false)){
     	soundLoaded = true;
 		soundFilePath = filepath;
-		//shouldRecomputePreview = true;
         player.getSpectrum(defaultSpectrumBandwidth);
         player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
         averageSize = player.getAverages().size();
+        for( int i = 0; i < keyframes.size(); i++ ){
+            ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
+		    switchKey->shouldRecomputePreview = true;
+        }
     }
 	return soundLoaded;
 }
@@ -232,7 +235,6 @@ void ofxTLAudioSwitches::draw(){
         ofRect(switchKey->display);
         //ofSetColor(timeline->getColors().keyColor);
         ofSetColor(ofColor( 50, 50, 50, 50 ));
-        ofNoFill();
 
         //draw preview
         for(int i = 0; i < switchKey->previews.size(); i++){
@@ -244,9 +246,6 @@ void ofxTLAudioSwitches::draw(){
         }
     }
     
-    ofPopStyle();
-
-    ofPushStyle();
     ofPopStyle();
 }
 
@@ -657,6 +656,7 @@ void ofxTLAudioSwitches::updateTimeRanges(){
             switchKey->startSelected = switchKey->endSelected;
             switchKey->endSelected = tempSelect;
         }
+        switchKey -> shouldRecomputePreview = true;
     }
 
     if( isOn() && getIsPlaying() ){
