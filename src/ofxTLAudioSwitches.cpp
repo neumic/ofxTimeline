@@ -124,7 +124,6 @@ void ofxTLAudioSwitches::switchStateChanged(ofxTLKeyframe* key){
     args.switchName = ((ofxTLAudioSwitch*)key)->textField.text;
     ofNotifyEvent(events().switched, args);
 
-    cerr << "switchStateChanged: getIsPlaying == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn == " << isOn() <<endl;
 
 }
 
@@ -302,7 +301,6 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
 	
 //	cout << "recomputing view with zoom bounds of " << zoomBounds << endl;
 	
-	float normalizationRatio = timeline->getDurationInSeconds() / player.getDuration(); //need to figure this out for framebased...but for now we are doing time based
 	float trackHeight = bounds.height/(1+player.getNumChannels());
 	int numSamples = player.getBuffer().size() / player.getNumChannels();
 	int numChannels = player.getNumChannels();
@@ -311,12 +309,9 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
 	for(int c = 0; c < numChannels; c++){
 		ofPolyline preview;
 		int lastFrameIndex = 0;
-        cerr<<width<<endl;
 		preview.resize(width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
 		for(int i = 0; i < width; i++){
-			//float pointInTrack = screenXtoNormalizedX( i ) * normalizationRatio; //will scale the screenX into wave's 0-1.0
             float pointInTrack = ofMap( i, 0, width, posVisRange.min, posVisRange.max );
-            cerr<<"pointInTrack = "<<pointInTrack<<endl;
 			float trackCenter = bounds.y + trackHeight * (c+1);
 			
 			ofPoint * vertex = & preview.getVertices()[ i * 2 ];
@@ -381,7 +376,6 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
 
 void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
 	ofxTLTrack::playbackStarted(args);
-    cerr << "playbackStarted(): getIsPlaying() == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn() == " << isOn() <<endl;
 
     if( isOn() ){
         playOnUpdate = true;
@@ -390,7 +384,6 @@ void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
 }
 
 void ofxTLAudioSwitches::playbackEnded(ofxTLPlaybackEventArgs& args){
-    cerr << "playbackEnded(): getIsPlaying() == " << getIsPlaying() << "; player.getIsPlaying() == " << player.getIsPlaying() << "; isOn() == " << isOn() <<endl;
     stopOnUpdate = true;
     trackIsPlaying = false;
 }
