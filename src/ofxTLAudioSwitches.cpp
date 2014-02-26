@@ -220,9 +220,11 @@ void ofxTLAudioSwitches::draw(){
             }
         }
         ofRect(switchKey->display);
-        ofSetColor(timeline->getColors().keyColor);
+        //ofSetColor(timeline->getColors().keyColor);
+        ofSetColor(ofColor( 50, 50, 50, 50 ));
         ofNoFill();
 
+        //draw preview
         for(int i = 0; i < switchKey->previews.size(); i++){
             ofPushMatrix();
             ofTranslate( startScreenX, 0, 0);
@@ -302,11 +304,11 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch ){
 		ofPolyline preview;
 		int lastFrameIndex = 0;
 		preview.resize(bounds.width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
-		for(float i = bounds.x; i < bounds.x+bounds.width; i++){
+		for(float i = 0; i < bounds.width; i++){
 			float pointInTrack = screenXtoNormalizedX( i ) * normalizationRatio; //will scale the screenX into wave's 0-1.0
 			float trackCenter = bounds.y + trackHeight * (c+1);
 			
-			ofPoint * vertex = & preview.getVertices()[ (i - bounds.x) * 2];
+			ofPoint * vertex = & preview.getVertices()[ i * 2 ];
 			
 			if(pointInTrack >= 0 && pointInTrack <= 1.0){
 				//draw sample at pointInTrack * waveDuration;
@@ -346,7 +348,7 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch ){
 					}
 				}
 				
-				while (vertex < & preview.getVertices()[ (i - bounds.x) * 2] + 2) {
+				while (vertex < & preview.getVertices()[ i * 2 ] + 2) {
 					*vertex = *(vertex-1);
 					vertex++;
 				}
