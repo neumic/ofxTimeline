@@ -34,7 +34,6 @@
 #include "ofxTLKeyframes.h"
 #include "ofxTextInputField.h"
 #include "ofOpenALSoundPlayer_TimelineAdditions.h"
-#include "ofxClipper.h"
 
 class ofxTLAudioSwitch : public ofxTLKeyframe {
   public:
@@ -123,14 +122,12 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
 	float positionForSecond(float second);
     bool soundLoaded;
 	bool shouldRecomputePreview;
-	vector< vector<ofPolyline> > previews; //[clips][chans]
-    void recomputePreview( vector<ofPolyline>*, float width, ofFloatRange positionsVisible);
+	vector<ofPolyline> previews;
+	void recomputePreview();
 	ofRange computedZoomBounds;
 	string soundFilePath;
 	float lastFFTPosition;
 	int defaultSpectrumBandwidth;
     int averageSize;
-
-   ofxClipper* clipper;
 
 };

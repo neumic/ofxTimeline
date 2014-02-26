@@ -48,7 +48,6 @@ ofxTLAudioSwitches::ofxTLAudioSwitches(){
 
     playOnUpdate = false;
     stopOnUpdate = false;
-    clipper = new ofxClipper();
 
 }
 
@@ -137,6 +136,14 @@ void ofxTLAudioSwitches::draw(){
     ofPushStyle();
 	ofFill();
 	
+	//draw a little wobble if its on
+	//if(isOnAtMillis(timeline->getCurrentTimeMillis())){
+	//play solo change
+	if(isOn()){
+		ofSetColor(timeline->getColors().disabledColor, 20+(1-powf(sin(ofGetElapsedTimef()*5)*.5+.5,2))*20);
+		ofRect(bounds);
+	}
+
     for(int i = 0; i < keyframes.size(); i++){
         ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
         float startScreenX = MAX(millisToScreenX(switchKey->timeRange.min), 0);
@@ -144,23 +151,6 @@ void ofxTLAudioSwitches::draw(){
 		if(startScreenX == endScreenX){
 			continue;
 		}
-
-        if(shouldRecomputePreview || viewIsDirty){
-            ofRange posVisRange = ofFloatRange( 
-                ofMap( startScreenX, 
-                       switchKey->timeRange.min, switchKey->timeRange.max,
-                       0.0, 1.0 ),
-                ofMap( endScreenX, 
-                       switchKey->timeRange.min, switchKey->timeRange.max,
-                       0.0, 1.0 ) );
-            if( previews.size() != keyframes.size() ){ //wrong place for this
-               previews.clear();
-               previews.resize( keyframes.size() );
-            }
-            cout<<"recomputing preview for frame: "<< i<<endl;
-            recomputePreview( &previews[i], endScreenX - startScreenX, posVisRange);
-        }
-
 		switchKey->display = ofRectangle(startScreenX, bounds.y, endScreenX-startScreenX, bounds.height);
 
         //draw handles
@@ -226,20 +216,6 @@ void ofxTLAudioSwitches::draw(){
             }
         }
         ofRect(switchKey->display);
-
-        for(int chan = 0; chan < previews[i].size(); chan++){
-            ofSetColor(timeline->getColors().keyColor);    
-            ofPushMatrix();
-
-//ofTranslate( normalizedXtoScreenX(computedZoomBounds.min, zoomBounds) - normalizedXtoScreenX(zoomBounds.min, zoomBounds), 0, 0);
-
-            //translate to beggining of switch
-            ofTranslate( millisToScreenX(switchKey->time), 0, 0);
-
-            //ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
-            previews[i][chan].draw();
-            ofPopMatrix();
-        }
     }
     
     /*
@@ -267,7 +243,23 @@ void ofxTLAudioSwitches::draw(){
     */
     ofPopStyle();
 
+	if(shouldRecomputePreview || viewIsDirty){
+        cerr << "recomputing preview" <<endl;
+		recomputePreview();
+	}
 
+    ofPushStyle();
+    ofSetColor(timeline->getColors().keyColor);
+    ofNoFill();
+    
+    for(int i = 0; i < previews.size(); i++){
+        ofPushMatrix();
+        ofTranslate( normalizedXtoScreenX(computedZoomBounds.min, zoomBounds) - normalizedXtoScreenX(zoomBounds.min, zoomBounds), 0, 0);
+        ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
+        previews[i].draw();
+        ofPopMatrix();
+    }
+    ofPopStyle();
 }
 
 bool ofxTLAudioSwitches::isOnAtMillis(long millis){
@@ -317,23 +309,28 @@ float ofxTLAudioSwitches::positionFromMillis( long millis ){
     }
 }
 
-void ofxTLAudioSwitches::recomputePreview( vector<ofPolyline>* chanPreviews, float width, ofFloatRange positionsVisible ){
-    chanPreviews->clear();
+void ofxTLAudioSwitches::recomputePreview(){
+	
+	previews.clear();
+	
+//	cout << "recomputing view with zoom bounds of " << zoomBounds << endl;
+	
+	float normalizationRatio = timeline->getDurationInSeconds() / player.getDuration(); //need to figure this out for framebased...but for now we are doing time based
+	float trackHeight = bounds.height/(1+player.getNumChannels());
+	int numSamples = player.getBuffer().size() / player.getNumChannels();
+	int pixelsPerSample = numSamples / bounds.width;
 	int numChannels = player.getNumChannels();
-	float trackHeight = bounds.height/(1+numChannels);
 	vector<short> & buffer  = player.getBuffer();
-	int numSamples = buffer.size() / player.getNumChannels();
 
 	for(int c = 0; c < numChannels; c++){
-        cout<<"channel =" << c<<endl;
 		ofPolyline preview;
 		int lastFrameIndex = 0;
-        preview.resize( width * 2 );  //Why * 2? Because there are two points per pixel, center and outside. 
-        for(float f = 0; f < width; f++){
-			float pointInTrack = ofMap( f, 0, width - 1, positionsVisible.min, positionsVisible.max, false);
+		preview.resize(bounds.width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
+		for(float i = bounds.x; i < bounds.x+bounds.width; i++){
+			float pointInTrack = screenXtoNormalizedX( i ) * normalizationRatio; //will scale the screenX into wave's 0-1.0
 			float trackCenter = bounds.y + trackHeight * (c+1);
 			
-			ofPoint * vertex = & preview.getVertices()[ f * 2];
+			ofPoint * vertex = & preview.getVertices()[ (i - bounds.x) * 2];
 			
 			if(pointInTrack >= 0 && pointInTrack <= 1.0){
 				//draw sample at pointInTrack * waveDuration;
@@ -352,24 +349,28 @@ void ofxTLAudioSwitches::recomputePreview( vector<ofPolyline>* chanPreviews, flo
 				}
 				
 				if(losample == 0 && hisample == 0){
-					vertex->x = f;
+					//preview.addVertex(i, trackCenter);
+					vertex->x = i;
 					vertex->y = trackCenter;
 					vertex++;
 				}
 				else {
 					if(losample != 0){
-						vertex->x = f;
+//						preview.addVertex(i, trackCenter - losample * trackHeight);
+						vertex->x = i;
 						vertex->y = trackCenter - losample * trackHeight*.5;
 						vertex++;
 					}
 					if(hisample != 0){
-						vertex->x = f;
+						//ofVertex(i, trackCenter - hisample * trackHeight);
+//						preview.addVertex(i, trackCenter - hisample * trackHeight);
+						vertex->x = i;
 						vertex->y = trackCenter - hisample * trackHeight*.5;
 						vertex++;
 					}
 				}
 				
-				while (vertex < & preview.getVertices()[ f * 2] + 2) {
+				while (vertex < & preview.getVertices()[ (i - bounds.x) * 2] + 2) {
 					*vertex = *(vertex-1);
 					vertex++;
 				}
@@ -377,15 +378,15 @@ void ofxTLAudioSwitches::recomputePreview( vector<ofPolyline>* chanPreviews, flo
 				lastFrameIndex = frameIndex;
 			}
 			else{
-				*vertex++ = ofPoint(f,trackCenter);
-				*vertex++ = ofPoint(f,trackCenter);
+				*vertex++ = ofPoint(i,trackCenter);
+				*vertex++ = ofPoint(i,trackCenter);
 			}
 		}
 		preview.simplify();
-		chanPreviews->push_back(preview);
+		previews.push_back(preview);
 	}
 	computedZoomBounds = zoomBounds;
-	//shouldRecomputePreview = false;
+	shouldRecomputePreview = false;
 }
 
 
