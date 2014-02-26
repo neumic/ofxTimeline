@@ -87,7 +87,7 @@ void ofxTLAudioSwitches::update(){
                 if( getIsPlaying() ){
                     if( switchKey->timeRange.contains( thisTimelinePoint ) ){
                         if( switchKey->soundLoaded ){
-                           switchKey->player.setPositionMS( positionFromMillis(currentTrackTime() ) );
+                           switchKey->player.setPositionMS( switchKey->positionFromMillis(currentTrackTime() ) );
                         }
                         if( !switchKey->player.getIsPlaying() ) {
                            switchKey->player.play();
@@ -296,16 +296,10 @@ ofxTLAudioSwitch* ofxTLAudioSwitches::getActiveSwitchAtMillis(long millis){
     return NULL;
 }
 
-float ofxTLAudioSwitches::positionFromMillis( long millis ){
+float ofxTLAudioSwitch::positionFromMillis( long millis ){
 //returns the player position in millis within the current switch, -1 if not in switch
 
-    ofxTLAudioSwitch* current = getActiveSwitchAtMillis( millis );
-    if( current != NULL ){
-        return millis - (current -> timeRange.min);
-    }
-    else{
-        return -1.0;
-    }
+    return millis - timeRange.min;
 }
 
 void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange){
@@ -389,16 +383,26 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
 
 void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
 	ofxTLTrack::playbackStarted(args);
-
-    if( isOn() ){
-        playOnUpdate = true;
+    for(int i = 0; i < keyframes.size(); i++){
+        ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
+        if( switchKey->timeRange.contains( currentTrackTime() ) &&
+                switchKey->soundLoaded ) {
+            switchKey->player.setPositionMS(
+                switchKey->positionFromMillis(currentTrackTime() ) );
+            switchKey->player.play();
+        }
     }
+
     trackIsPlaying = true;
 }
 
 void ofxTLAudioSwitches::playbackEnded(ofxTLPlaybackEventArgs& args){
     stopOnUpdate = true;
     trackIsPlaying = false;
+    for(int i = 0; i < keyframes.size(); i++){
+        ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
+        switchKey->player.stop();
+    }
 }
 
 bool ofxTLAudioSwitches::mousePressed(ofMouseEventArgs& args, long millis){
