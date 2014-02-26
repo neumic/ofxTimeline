@@ -40,7 +40,6 @@ ofxTLAudioSwitches::ofxTLAudioSwitches(){
     enteringText = false;
 	clickedTextField = NULL;
 
-	shouldRecomputePreview = false;
     soundLoaded = false;
 	lastFFTPosition = -1;
 	defaultSpectrumBandwidth = 1024;
@@ -60,7 +59,7 @@ bool ofxTLAudioSwitches::loadSoundfile(string filepath){
 	if(player.loadSound(filepath, false)){
     	soundLoaded = true;
 		soundFilePath = filepath;
-		shouldRecomputePreview = true;
+		//shouldRecomputePreview = true;
         player.getSpectrum(defaultSpectrumBandwidth);
         player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
         averageSize = player.getAverages().size();
@@ -151,6 +150,11 @@ void ofxTLAudioSwitches::draw(){
 		if(startScreenX == endScreenX){
 			continue;
 		}
+
+        if(switchKey->shouldRecomputePreview || viewIsDirty){
+            recomputePreview(switchKey);
+        }
+
 		switchKey->display = ofRectangle(startScreenX, bounds.y, endScreenX-startScreenX, bounds.height);
 
         //draw handles
@@ -216,49 +220,21 @@ void ofxTLAudioSwitches::draw(){
             }
         }
         ofRect(switchKey->display);
+        ofSetColor(timeline->getColors().keyColor);
+        ofNoFill();
+
+        for(int i = 0; i < switchKey->previews.size(); i++){
+            ofPushMatrix();
+            ofTranslate( startScreenX, 0, 0);
+            ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
+            switchKey->previews[i].draw();
+            ofPopMatrix();
+        }
     }
     
-    /*
-    ofFill();
-	ofSetLineWidth(5);
-	for(int i = keyframes.size()-1; i >= 0; i--){
-        ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
-		if(isKeyframeIsInBounds(switchKey)){
-			int screenX = millisToScreenX(switchKey->time);
-			
-			ofSetColor(timeline->getColors().backgroundColor);
-			int textHeight = bounds.y + 10 + ( (20*i) % int(MAX(bounds.height-15, 15)));
-			switchKey->textFieldDisplay = ofRectangle(MIN(screenX+3, bounds.getMaxX() - switchKey->textField.bounds.width),
-									   textHeight-10, 100, 15);
-			ofRect(switchKey->textFieldDisplay);
-			
-			ofSetColor(timeline->getColors().textColor);
-			
-			switchKey->textField.bounds.x = switchKey->textFieldDisplay.x;
-			switchKey->textField.bounds.y = switchKey->textFieldDisplay.y;
-			switchKey->textField.draw();
-		}
-	}
-    
-    */
     ofPopStyle();
 
-	if(shouldRecomputePreview || viewIsDirty){
-        cerr << "recomputing preview" <<endl;
-		recomputePreview();
-	}
-
     ofPushStyle();
-    ofSetColor(timeline->getColors().keyColor);
-    ofNoFill();
-    
-    for(int i = 0; i < previews.size(); i++){
-        ofPushMatrix();
-        ofTranslate( normalizedXtoScreenX(computedZoomBounds.min, zoomBounds) - normalizedXtoScreenX(zoomBounds.min, zoomBounds), 0, 0);
-        ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
-        previews[i].draw();
-        ofPopMatrix();
-    }
     ofPopStyle();
 }
 
@@ -309,9 +285,9 @@ float ofxTLAudioSwitches::positionFromMillis( long millis ){
     }
 }
 
-void ofxTLAudioSwitches::recomputePreview(){
+void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch ){
 	
-	previews.clear();
+	audioSwitch->previews.clear();
 	
 //	cout << "recomputing view with zoom bounds of " << zoomBounds << endl;
 	
@@ -383,10 +359,10 @@ void ofxTLAudioSwitches::recomputePreview(){
 			}
 		}
 		preview.simplify();
-		previews.push_back(preview);
+		audioSwitch->previews.push_back(preview);
 	}
 	computedZoomBounds = zoomBounds;
-	shouldRecomputePreview = false;
+	audioSwitch->shouldRecomputePreview = false;
 }
 
 
@@ -765,6 +741,8 @@ ofxTLKeyframe* ofxTLAudioSwitches::newKeyframe(){
 	
 	//for just placing a switch we'll be able to decide the end position
 	placingSwitch = switchKey;
+
+   switchKey->shouldRecomputePreview = true;
 	
     return switchKey;
 }

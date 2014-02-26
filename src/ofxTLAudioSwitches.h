@@ -49,6 +49,9 @@ class ofxTLAudioSwitch : public ofxTLKeyframe {
     
     ofxTextInputField textField;
     ofRectangle textFieldDisplay;
+
+	bool shouldRecomputePreview;
+	vector<ofPolyline> previews;
 };
 
 class ofxTLAudioSwitches : public ofxTLKeyframes {
@@ -121,9 +124,7 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
     bool trackIsPlaying;
 	float positionForSecond(float second);
     bool soundLoaded;
-	bool shouldRecomputePreview;
-	vector<ofPolyline> previews;
-	void recomputePreview();
+	void recomputePreview(ofxTLAudioSwitch* audioSwitch);
 	ofRange computedZoomBounds;
 	string soundFilePath;
 	float lastFFTPosition;
