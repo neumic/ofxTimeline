@@ -64,6 +64,7 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
 	virtual ~ofxTLAudioSwitches();
 
 	virtual bool loadSoundfile(string filepath);
+	virtual bool loadSoundfile(string filepath, ofxTLAudioSwitch* switchKey);
 	virtual bool isSoundLoaded();
     virtual bool getIsPlaying();
 

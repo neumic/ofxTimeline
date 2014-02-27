@@ -56,6 +56,18 @@ ofxTLAudioSwitches::~ofxTLAudioSwitches(){
 bool ofxTLAudioSwitches::loadSoundfile(string filepath){
     ofxTLAudioSwitch* switchKey = new ofxTLAudioSwitch();
     switchKey->time = 0;
+    if(loadSoundfile( filepath, switchKey ) ){
+        switchKey->timeRange = ofLongRange( 0, switchKey->player.getDuration() *1000 );
+        keyframes.push_back(switchKey);
+		updateKeyframeSort();
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+bool ofxTLAudioSwitches::loadSoundfile(string filepath, ofxTLAudioSwitch* switchKey){
 	switchKey->soundLoaded = false;
     
 	if(switchKey->player.loadSound(filepath, false)){
@@ -64,9 +76,6 @@ bool ofxTLAudioSwitches::loadSoundfile(string filepath){
         switchKey->player.getSpectrum(defaultSpectrumBandwidth);
         switchKey->player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
         switchKey->shouldRecomputePreview = true;
-        switchKey->timeRange = ofLongRange( 0, switchKey->player.getDuration() *1000 );
-        keyframes.push_back(switchKey);
-		updateKeyframeSort();
     }
 	return switchKey->soundLoaded;
 }
@@ -789,6 +798,9 @@ void ofxTLAudioSwitches::restoreKeyframe(ofxTLKeyframe* key, ofxXmlSettings& xml
     else{
 		switchKey->timeRange.max = timeline->getTimecode().millisForTimecode(timecode);
     }
+
+    loadSoundfile( xmlStore.getValue("soundFilePath", ""), switchKey );
+
     //this is so freshly restored keys won't have ends selected but click keys will
     switchKey->startSelected = switchKey->endSelected = false;
 	
@@ -802,6 +814,8 @@ void ofxTLAudioSwitches::storeKeyframe(ofxTLKeyframe* key, ofxXmlSettings& xmlSt
     xmlStore.addValue("switchName", switchKey->textField.text);
     switchKey->time = switchKey->timeRange.min;
 	xmlStore.addValue("max", timeline->getTimecode().timecodeForMillis(switchKey->timeRange.max));
+	xmlStore.addValue("soundFilePath", switchKey->soundFilePath);
+
 }
 
 void ofxTLAudioSwitches::willDeleteKeyframe(ofxTLKeyframe* keyframe){
