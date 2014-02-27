@@ -56,8 +56,6 @@ class ofxTLAudioSwitch : public ofxTLKeyframe {
 	ofOpenALSoundPlayer_TimelineAdditions player;
     string soundFilePath;
     bool soundLoaded;
-
-    virtual float positionFromMillis( long millis );
 };
 
 class ofxTLAudioSwitches : public ofxTLKeyframes {
@@ -77,6 +75,7 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
     
     ofxTLAudioSwitch* getActiveSwitchAtMillis(long millis);
 
+    virtual float positionFromMillis( ofxTLAudioSwitch* switchKey, long millis );
 
     virtual void playbackStarted(ofxTLPlaybackEventArgs& args);
 	//virtual void playbackLooped(ofxTLPlaybackEventArgs& args);

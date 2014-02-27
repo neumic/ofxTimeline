@@ -87,7 +87,7 @@ void ofxTLAudioSwitches::update(){
                 if( getIsPlaying() ){
                     if( switchKey->timeRange.contains( thisTimelinePoint ) ){
                         if( switchKey->soundLoaded ){
-                           switchKey->player.setPositionMS( switchKey->positionFromMillis(currentTrackTime() ) );
+                           switchKey->player.setPositionMS( positionFromMillis(switchKey, currentTrackTime() ) );
                         }
                         if( !switchKey->player.getIsPlaying() ) {
                            switchKey->player.play();
@@ -296,10 +296,14 @@ ofxTLAudioSwitch* ofxTLAudioSwitches::getActiveSwitchAtMillis(long millis){
     return NULL;
 }
 
-float ofxTLAudioSwitch::positionFromMillis( long millis ){
+float ofxTLAudioSwitches::positionFromMillis( ofxTLAudioSwitch* switchKey, long millis ){
 //returns the player position in millis within the current switch, -1 if not in switch
-
-    return millis - timeRange.min;
+    if( switchKey != NULL ){
+        return millis - switchKey -> timeRange.min;
+    }
+    else{
+        return -1.0;
+    }
 }
 
 void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange){
@@ -388,7 +392,7 @@ void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
         if( switchKey->timeRange.contains( currentTrackTime() ) &&
                 switchKey->soundLoaded ) {
             switchKey->player.setPositionMS(
-                switchKey->positionFromMillis(currentTrackTime() ) );
+                positionFromMillis(switchKey,currentTrackTime() ) );
             switchKey->player.play();
         }
     }
