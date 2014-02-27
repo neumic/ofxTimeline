@@ -121,8 +121,6 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
       bool enteringText;
 
 
-      bool playOnUpdate;
-      bool stopOnUpdate;
       bool trackIsPlaying;
       float positionForSecond(float second);
       void recomputePreview(ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange);

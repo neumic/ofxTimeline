@@ -44,9 +44,6 @@ ofxTLAudioSwitches::ofxTLAudioSwitches(){
    defaultSpectrumBandwidth = 1024;
    trackIsPlaying = 0;
 
-   playOnUpdate = false;
-   stopOnUpdate = false;
-
 }
 
 ofxTLAudioSwitches::~ofxTLAudioSwitches(){
@@ -383,7 +380,6 @@ void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
 }
 
 void ofxTLAudioSwitches::playbackEnded(ofxTLPlaybackEventArgs& args){
-   stopOnUpdate = true;
    trackIsPlaying = false;
    for(int i = 0; i < keyframes.size(); i++){
       ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
@@ -568,9 +564,11 @@ void ofxTLAudioSwitches::mouseDragged(ofMouseEventArgs& args, long millis){
          if(switchKey->startSelected){
             switchKey->timeRange.min = millis - switchKey->edgeDragOffset;
             switchKey->time = switchKey->timeRange.min;
+            switchKey -> shouldRecomputePreview = true;
          }
          else if(switchKey->endSelected){
             switchKey->timeRange.max = millis - switchKey->edgeDragOffset;
+            switchKey -> shouldRecomputePreview = true;
          }
       }
 
@@ -652,14 +650,7 @@ void ofxTLAudioSwitches::updateTimeRanges(){
          switchKey->startSelected = switchKey->endSelected;
          switchKey->endSelected = tempSelect;
       }
-      switchKey -> shouldRecomputePreview = true;
-   }
-
-   if( isOn() && getIsPlaying() ){
-      playOnUpdate = true;
-   }
-   else if( !isOn() && getIsPlaying() ){
-      stopOnUpdate = true;
+      //switchKey -> shouldRecomputePreview = true;
    }
 
    //TODO: no overlaps!!
