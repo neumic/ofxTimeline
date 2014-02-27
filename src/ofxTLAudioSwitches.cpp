@@ -373,7 +373,9 @@ void ofxTLAudioSwitches::playbackStarted(ofxTLPlaybackEventArgs& args){
             switchKey->soundLoaded ) {
          switchKey->player.setPositionMS(
                positionFromMillis(switchKey,currentTrackTime() ) );
-         switchKey->player.play();
+         if( !switchKey->player.getIsPlaying() ){
+            switchKey->player.play();
+         }
       }
    }
    trackIsPlaying = true;
