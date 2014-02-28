@@ -289,6 +289,9 @@ float ofxTLAudioSwitches::positionFromMillis( ofxTLAudioSwitch* switchKey, long 
 void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int width, ofFloatRange posVisRange){
 
    audioSwitch->previews.clear();
+   if( width < 5 ){
+      return;
+   }
 
    //cout << "recomputing view with zoom bounds of " << zoomBounds << endl;
 
@@ -296,14 +299,16 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
    int numChannels = audioSwitch->player.getNumChannels();
    vector<short> & buffer  = audioSwitch->player.getBuffer();
    int numSamples = buffer.size() / numChannels;
+   int frameSize = (numSamples * posVisRange.span()) / width;
+   int stepSize  = 2 + (frameSize / 60);
 
    for(int c = 0; c < numChannels; c++){
       ofPolyline preview;
       int lastFrameIndex = 0;
+      float trackCenter = bounds.y + trackHeight * (c+1);
       preview.resize(width*2);  //Why * 2? Because there are two points per pixel, center and outside. 
       for(int i = 0; i < width; i++){
          float pointInTrack = ofMap( i, 0, width, posVisRange.min, posVisRange.max );
-         float trackCenter = bounds.y + trackHeight * (c+1);
 
          ofPoint * vertex = & preview.getVertices()[ i * 2 ];
 
@@ -312,7 +317,7 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
             int frameIndex = pointInTrack * numSamples;
             float losample = 0;
             float hisample = 0;
-            for(int f = lastFrameIndex; f < frameIndex; f++){
+            for(long f = lastFrameIndex; f < frameIndex; f+=stepSize) {
                int sampleIndex = f * numChannels + c;
                float subpixelSample = buffer[sampleIndex]/32565.0;
                if(subpixelSample < losample) {
