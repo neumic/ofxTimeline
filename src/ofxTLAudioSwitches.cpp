@@ -37,8 +37,6 @@
 ofxTLAudioSwitches::ofxTLAudioSwitches(){
    placingSwitch = NULL;
    lastTimelinePoint = 0;
-   enteringText = false;
-   clickedTextField = NULL;
 
    lastFFTPosition = -1;
    defaultSpectrumBandwidth = 1024;
@@ -116,7 +114,6 @@ void ofxTLAudioSwitches::switchStateChanged(ofxTLKeyframe* key){
    args.sender = timeline;
    args.track = this;
    args.on = isOn();
-   args.switchName = ((ofxTLAudioSwitch*)key)->textField.text;
    ofNotifyEvent(events().switched, args);
 }
 
@@ -300,7 +297,7 @@ void ofxTLAudioSwitches::recomputePreview( ofxTLAudioSwitch* audioSwitch, int wi
    vector<short> & buffer  = audioSwitch->player.getBuffer();
    int numSamples = buffer.size() / numChannels;
    int frameSize = (numSamples * posVisRange.span()) / width;
-   int stepSize  = 2 + (frameSize / 60);
+   int stepSize  = 2 + (frameSize / 60);//this number is magic. It seems about right
 
    for(int c = 0; c < numChannels; c++){
       ofPolyline preview;
@@ -395,50 +392,6 @@ void ofxTLAudioSwitches::playbackEnded(ofxTLPlaybackEventArgs& args){
 }
 
 bool ofxTLAudioSwitches::mousePressed(ofMouseEventArgs& args, long millis){
-   clickedTextField = NULL;
-   //look at each element to see if a text field was clicked
-   for(int i = 0; i < keyframes.size(); i++){
-      ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
-      if(switchKey->textFieldDisplay.inside(args.x, args.y)){
-         clickedTextField = switchKey;
-         break;
-      }
-   }
-
-   //if so, select that text field and key and present modally
-   //so that keyboard input all goes to the text field.
-   //selection model is designed so that you can type into
-   //mulitple fields at once
-   if(clickedTextField != NULL){
-      timeline->presentedModalContent(this);
-      if(!ofGetModifierSelection()){
-         timeline->unselectAll();
-      }
-      if(ofGetModifierSelection() && clickedTextField->textField.getIsEditing()){
-         clickedTextField->textField.endEditing();
-      }
-      else{
-         clickedTextField->textField.beginEditing();
-         enteringText = true;
-         //make sure this key is selected
-         selectKeyframe(clickedTextField);
-      }
-      return false;
-   }
-   else{
-      if(enteringText && !isHovering()){
-         for(int i = 0; i < selectedKeyframes.size(); i++){
-            ((ofxTLAudioSwitch*)selectedKeyframes[i])->textField.endEditing();
-         }
-         enteringText = false;
-         timeline->dismissedModalContent();
-      }
-   }
-
-   if(enteringText)
-      return false;
-
-   // ---
    if(placingSwitch != NULL){
       if(isActive() && args.button == 0){
          placingSwitch->timeRange.max = millis;
@@ -539,7 +492,6 @@ void ofxTLAudioSwitches::unselectAll(){
    for(int i = 0; i < keyframes.size(); i++){
       ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)keyframes[i];
       switchKey->startSelected = switchKey->endSelected = false;
-      switchKey->textField.disable();
    }
 }
 
@@ -556,9 +508,6 @@ void ofxTLAudioSwitches::updateEdgeDragOffsets(long clickMillis){
 }
 
 void ofxTLAudioSwitches::mouseDragged(ofMouseEventArgs& args, long millis){
-   if(enteringText)
-      return;
-
    //do the normal dragging behavior for selected keyframes
    ofxTLKeyframes::mouseDragged(args, millis);
 
@@ -664,46 +613,11 @@ void ofxTLAudioSwitches::updateTimeRanges(){
 }
 
 void ofxTLAudioSwitches::mouseReleased(ofMouseEventArgs& args, long millis){
-   //if we didn't click on a text field and we are entering txt
-   //take off the typing mode. Hitting enter will also do this
-   if(enteringText){
-      //if we clicked outside of the rect, definitely deslect everything
-      if(clickedTextField == NULL && !ofGetModifierSelection()){
-         for(int i = 0; i < selectedKeyframes.size(); i++){
-            ((ofxTLAudioSwitch*)selectedKeyframes[i])->textField.endEditing();
-         }
-         enteringText = false;
-      }
-      //otherwise check if still have a selection
-      else{
-         enteringText = false;
-         for(int i = 0; i < selectedKeyframes.size(); i++){
-            enteringText = enteringText || ((ofxTLAudioSwitch*)selectedKeyframes[i])->textField.getIsEditing();
-         }
-      }
-
-      if(!enteringText){
-         timeline->dismissedModalContent();
-         timeline->flagTrackModified(this);
-      }
-   } else {
-      ofxTLKeyframes::mouseReleased(args, millis);
-   }
+   ofxTLKeyframes::mouseReleased(args, millis);
 }
 
 void ofxTLAudioSwitches::keyPressed(ofKeyEventArgs& args){
-
-   if(enteringText){
-      //enter key submits the values
-      //This could be done be responding to the event from the text field itself...
-      if(args.key == OF_KEY_RETURN){
-         enteringText = false;
-         timeline->dismissedModalContent();
-         timeline->flagTrackModified(this);
-      }
-   } else {
-      ofxTLKeyframes::keyPressed(args);
-   }
+   ofxTLKeyframes::keyPressed(args);
 }
 
 void ofxTLAudioSwitches::regionSelected(ofLongRange timeRange, ofRange valueRange){
@@ -739,7 +653,6 @@ int ofxTLAudioSwitches::getSelectedItemCount(){
 
 ofxTLKeyframe* ofxTLAudioSwitches::newKeyframe(){
    ofxTLAudioSwitch* switchKey = new ofxTLAudioSwitch();
-   switchKey->textField.setFont(timeline->getFont());
 
    //in the case of a click, start at the mouse positiion
    //if this is being restored from XML, the next call to restore will override this with what is in the XML
@@ -758,7 +671,6 @@ ofxTLKeyframe* ofxTLAudioSwitches::newKeyframe(){
 void ofxTLAudioSwitches::restoreKeyframe(ofxTLKeyframe* key, ofxXmlSettings& xmlStore){
    //pull the saved time into min, and our custom max value
    ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch*)key;
-   switchKey->textField.text = xmlStore.getValue("switchName", "");
 
    switchKey->timeRange.min = switchKey->time;
    //
@@ -782,7 +694,6 @@ void ofxTLAudioSwitches::restoreKeyframe(ofxTLKeyframe* key, ofxXmlSettings& xml
 void ofxTLAudioSwitches::storeKeyframe(ofxTLKeyframe* key, ofxXmlSettings& xmlStore){
    //push the time range into X/Y
    ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch* )key;
-   xmlStore.addValue("switchName", switchKey->textField.text);
    switchKey->time = switchKey->timeRange.min;
    xmlStore.addValue("max", timeline->getTimecode().timecodeForMillis(switchKey->timeRange.max));
    xmlStore.addValue("soundFilePath", switchKey->soundFilePath);
@@ -790,12 +701,6 @@ void ofxTLAudioSwitches::storeKeyframe(ofxTLKeyframe* key, ofxXmlSettings& xmlSt
 }
 
 void ofxTLAudioSwitches::willDeleteKeyframe(ofxTLKeyframe* keyframe){
-   ofxTLAudioSwitch* switchKey = (ofxTLAudioSwitch* )keyframe;
-   if(switchKey->textField.getIsEditing()){
-      timeline->dismissedModalContent();
-      timeline->flagTrackModified(this);
-   }
-   switchKey->textField.disable();
 }
 
 ofxTLKeyframe* ofxTLAudioSwitches::keyframeAtScreenpoint(ofVec2f p){

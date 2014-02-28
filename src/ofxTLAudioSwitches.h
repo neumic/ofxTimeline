@@ -32,7 +32,6 @@
 
 #pragma once 
 #include "ofxTLKeyframes.h"
-#include "ofxTextInputField.h"
 #include "ofOpenALSoundPlayer_TimelineAdditions.h"
 
 class ofxTLAudioSwitch : public ofxTLKeyframe {
@@ -45,9 +44,6 @@ class ofxTLAudioSwitch : public ofxTLKeyframe {
       bool endSelected;
       long edgeDragOffset;
       ofRectangle display;
-
-      ofxTextInputField textField;
-      ofRectangle textFieldDisplay;
 
       bool shouldRecomputePreview;
       vector<ofPolyline> previews;
@@ -116,10 +112,6 @@ class ofxTLAudioSwitches : public ofxTLKeyframes {
       bool startHover;
       bool endHover;
       ofxTLAudioSwitch* placingSwitch;
-
-      ofxTLAudioSwitch* clickedTextField;
-      bool enteringText;
-
 
       bool trackIsPlaying;
       float positionForSecond(float second);
