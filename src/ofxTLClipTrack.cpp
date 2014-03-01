@@ -33,6 +33,26 @@
 #include "ofxTLClipTrack.h"
 #include "ofxTimeline.h"
 
+ofxTLClip::ofxTLClip(){
+   selected = false;
+}
+
+bool ofxTLClip::isInside( long millis ){
+   return timeRange.contains( millis );
+}
+
+bool ofxTLClip::isSelected(){
+   return selected;
+}
+
+void ofxTLClip::select(){
+   selected = true;
+}
+
+void ofxTLClip::deselect(){
+   selected = false;
+}
+
 ofxTLClipTrack::ofxTLClipTrack(){
 	
 }
@@ -77,13 +97,17 @@ void ofxTLClipTrack::draw(){
 	}
 	
 	ofNoFill();
-	ofSetColor(timeline->getColors().keyColor);
 	for(int i = 0; i < clips.size(); i++){
 		float boxStart = millisToScreenX(clips[i].timeRange.min);
 		float boxWidth = millisToScreenX(clips[i].timeRange.max) - millisToScreenX(clips[i].timeRange.min);
 		if(boxStart > bounds.x && boxStart < bounds.x+bounds.width){
 			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
 			//ofCircle(screenX, bounds.getMinY() + 10, 4);
+         if( clips[i].isSelected() ){
+            ofSetColor(timeline->getColors().textColor);
+         } else {
+            ofSetColor(timeline->getColors().keyColor);
+         }
          ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
 		}
 	}
@@ -92,6 +116,16 @@ void ofxTLClipTrack::draw(){
 //caled by the timeline, don't need to register events
 bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 	createNewPoint = isActive();
+
+   for( int i; i < clips.size(); i++ ){
+      if( clips[i].isInside( millis ) ){
+         clips[i].select();
+         createNewPoint = false;
+      } else {
+         clips[i].deselect();
+      }
+   }
+
 	clickPoint = ofVec2f(args.x,args.y);
 	return createNewPoint; //signals that the click made a selection
 }
@@ -131,13 +165,25 @@ void ofxTLClipTrack::getSnappingPoints(set<unsigned long long>& points){
 	
 }
 void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
-	
+   for( int i; i < clips.size(); i++ ){
+      if( timeRange.contains( clips[i].timeRange ) ){
+         clips[i].select();
+      } else {
+         clips[i].deselect();
+      }
+   }
 }
+
 void ofxTLClipTrack::unselectAll(){
-	
+   for( int i; i < clips.size(); i++ ){
+      clips[i].deselect();
+   }
 }
+
 void ofxTLClipTrack::selectAll(){
-	
+   for( int i; i < clips.size(); i++ ){
+      clips[i].select();
+   }
 }
 
 //return a unique name for your track

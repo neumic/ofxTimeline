@@ -38,8 +38,14 @@
 
 class ofxTLClip {
    public:
+      ofxTLClip();
+      virtual bool isInside( long millis );
+      virtual bool isSelected();
+      virtual void select();
+      virtual void deselect();
       ofLongRange timeRange;
-      
+   private:
+      bool selected; 
 };
 
 class ofxTLClipTrack : public ofxTLTrack {
