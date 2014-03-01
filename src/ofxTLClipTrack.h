@@ -36,15 +36,16 @@
 #include "ofMain.h"
 #include "ofxTLTrack.h"
 
-typedef struct {
-	float value;
-	unsigned long long time;
-} ClickPoint;
+class ofxTLClip {
+   public:
+      ofLongRange timeRange;
+      
+};
 
-class ofxTLEmptyTrack : public ofxTLTrack {
+class ofxTLClipTrack : public ofxTLTrack {
   public:
-	ofxTLEmptyTrack();
-	virtual ~ofxTLEmptyTrack();
+	ofxTLClipTrack();
+	virtual ~ofxTLClipTrack();
 
 	//enable and disable are always automatically called
 	//in setup. Must call superclass's method as well as doing your own
@@ -109,5 +110,5 @@ class ofxTLEmptyTrack : public ofxTLTrack {
   protected:
 	ofVec2f clickPoint;
 	bool createNewPoint;
-	vector<ClickPoint> clickPoints;
+	vector<ofxTLClip> clips;
 };

@@ -30,27 +30,27 @@
  *
  */
 
-#include "ofxTLEmptyTrack.h"
+#include "ofxTLClipTrack.h"
 #include "ofxTimeline.h"
 
-ofxTLEmptyTrack::ofxTLEmptyTrack(){
+ofxTLClipTrack::ofxTLClipTrack(){
 	
 }
 
-ofxTLEmptyTrack::~ofxTLEmptyTrack(){
+ofxTLClipTrack::~ofxTLClipTrack(){
 	
 }
 
 //enable and disable are always automatically called
 //in setup. Must call superclass's method as well as doing your own
 //enabling and disabling
-void ofxTLEmptyTrack::enable(){
+void ofxTLClipTrack::enable(){
 	ofxTLTrack::enable();
 	
 	//other enabling
 }
 
-void ofxTLEmptyTrack::disable(){
+void ofxTLClipTrack::disable(){
 	ofxTLTrack::disable();
 	
 	//other disabling
@@ -60,13 +60,13 @@ void ofxTLEmptyTrack::disable(){
 //if your track triggers events it's good to do it here
 //if timeline is set to thread this is called on the back thread so
 //be careful if loading images in herre
-void ofxTLEmptyTrack::update(){
+void ofxTLClipTrack::update(){
 	
 }
 
 //draw your track contents. use ofRectangle bounds to know where to draw
 //and the Track functions screenXToMillis() or millisToScreenX() to respect zoom
-void ofxTLEmptyTrack::draw(){
+void ofxTLClipTrack::draw(){
 	
 	//this is just a simple example
 	ofPushStyle();
@@ -78,37 +78,39 @@ void ofxTLEmptyTrack::draw(){
 	
 	ofNoFill();
 	ofSetColor(timeline->getColors().keyColor);
-	for(int i = 0; i < clickPoints.size(); i++){
-		float screenX = millisToScreenX(clickPoints[i].time);
-		if(screenX > bounds.x && screenX < bounds.x+bounds.width){
-			float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
-			ofCircle(screenX, screenY, 4);
+	for(int i = 0; i < clips.size(); i++){
+		float boxStart = millisToScreenX(clips[i].timeRange.min);
+		float boxWidth = millisToScreenX(clips[i].timeRange.max) - millisToScreenX(clips[i].timeRange.min);
+		if(boxStart > bounds.x && boxStart < bounds.x+bounds.width){
+			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
+			//ofCircle(screenX, bounds.getMinY() + 10, 4);
+         ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
 		}
 	}
 }
 
 //caled by the timeline, don't need to register events
-bool ofxTLEmptyTrack::mousePressed(ofMouseEventArgs& args, long millis){
+bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 	createNewPoint = isActive();
 	clickPoint = ofVec2f(args.x,args.y);
 	return createNewPoint; //signals that the click made a selection
 }
 
-void ofxTLEmptyTrack::mouseMoved(ofMouseEventArgs& args, long millis){
+void ofxTLClipTrack::mouseMoved(ofMouseEventArgs& args, long millis){
 	
 }
-void ofxTLEmptyTrack::mouseDragged(ofMouseEventArgs& args, long millis){
+void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
 	
 }
-void ofxTLEmptyTrack::mouseReleased(ofMouseEventArgs& args, long millis){
+void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
 	
 	//need to create clicks on mouse up if the mouse hasn't moved in order to work
 	//well with the click-drag rectangle thing
 	if(createNewPoint && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
-		ClickPoint newpoint;
-		newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
-		newpoint.time = millis;
-		clickPoints.push_back(newpoint);
+		ofxTLClip newClip;
+		//newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
+		newClip.timeRange = ofLongRange(millis, millis + 10000);
+		clips.push_back(newClip);
 		//call this on mouseup or keypressed after a click 
 		//will trigger save and needed for undo
 		timeline->flagTrackModified(this);
@@ -116,69 +118,69 @@ void ofxTLEmptyTrack::mouseReleased(ofMouseEventArgs& args, long millis){
 }
 
 //keys pressed events, and nuding from arrow keys with normalized nudge amount 0 - 1.0
-void ofxTLEmptyTrack::keyPressed(ofKeyEventArgs& args){
+void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 	
 }
-void ofxTLEmptyTrack::nudgeBy(ofVec2f nudgePercent){
+void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
 	
 }
 
 //if your track has some selectable elements you can interface with snapping
 //and selection/unselection here
-void ofxTLEmptyTrack::getSnappingPoints(set<unsigned long long>& points){
+void ofxTLClipTrack::getSnappingPoints(set<unsigned long long>& points){
 	
 }
-void ofxTLEmptyTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
+void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
 	
 }
-void ofxTLEmptyTrack::unselectAll(){
+void ofxTLClipTrack::unselectAll(){
 	
 }
-void ofxTLEmptyTrack::selectAll(){
+void ofxTLClipTrack::selectAll(){
 	
 }
 
 //return a unique name for your track
-string ofxTLEmptyTrack::getTrackType(){
-	return "EmptyTrack";
+string ofxTLClipTrack::getTrackType(){
+	return "ClipTrack";
 }
 
 //for copy+paste you can optionaly implement ways
 //of creating XML strings that represent your selected tracks
-string ofxTLEmptyTrack::copyRequest(){
+string ofxTLClipTrack::copyRequest(){
 	return "";
 }
 
-string ofxTLEmptyTrack::cutRequest(){
+string ofxTLClipTrack::cutRequest(){
 	return "";
 }
 
 //will return the same type of strings you provide in copy and paste
 //but may contain foreign data from other tracks so be careful
-void ofxTLEmptyTrack::pasteSent(string pasteboard){
+void ofxTLClipTrack::pasteSent(string pasteboard){
 	
 }
 
 //for undo and redo you can implement a way of
 //reperesnt your whole track as XML
-string ofxTLEmptyTrack::getXMLRepresentation(){
+string ofxTLClipTrack::getXMLRepresentation(){
 	return "";
 }
 
-void ofxTLEmptyTrack::loadFromXMLRepresentation(string rep){
+void ofxTLClipTrack::loadFromXMLRepresentation(string rep){
 
 }
 
 //serialize your track.
 //use ofxTLTrack's string xmlFileName
-void ofxTLEmptyTrack::save(){
+void ofxTLClipTrack::save(){
 	
 }
 
-void ofxTLEmptyTrack::load(){
+void ofxTLClipTrack::load(){
 	
 }
 
-void ofxTLEmptyTrack::clear(){
+void ofxTLClipTrack::clear(){
 	
 }
