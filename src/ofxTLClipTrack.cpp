@@ -175,8 +175,15 @@ void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
 //if your track has some selectable elements you can interface with snapping
 //and selection/unselection here
 void ofxTLClipTrack::getSnappingPoints(set<unsigned long long>& points){
-	
+   for( int i = 0; i < clips.size(); i++){
+      //TODO check if the clip is in bounds as well
+      if( !clips[i].isSelected() ){
+         points.insert(clips[i].timeRange.min);
+         points.insert(clips[i].timeRange.max);
+      }
+   }
 }
+
 void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
    for( int i; i < clips.size(); i++ ){
       if( timeRange.contains( clips[i].timeRange ) ){
