@@ -176,7 +176,7 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 
    bool shouldUnselectAll = true;
 
-   for( int i; i < clips.size(); i++ ){
+   for( int i = 0; i < clips.size(); i++ ){
       if( clips[i].isInside( millis ) ){
          shouldUnselectAll = false;
          if( !ofGetModifierSelection() ){
@@ -256,7 +256,7 @@ void ofxTLClipTrack::getSnappingPoints(set<unsigned long long>& points){
 }
 
 void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
-   for( int i; i < clips.size(); i++ ){
+   for( int i = 0; i < clips.size(); i++ ){
       if( timeRange.contains( clips[i].timeRange ) ){
          clips[i].select();
       } else if( !ofGetModifierSelection() ){
@@ -266,13 +266,13 @@ void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
 }
 
 void ofxTLClipTrack::unselectAll(){
-   for( int i; i < clips.size(); i++ ){
+   for( int i = 0; i < clips.size(); i++ ){
       clips[i].deselect();
    }
 }
 
 void ofxTLClipTrack::selectAll(){
-   for( int i; i < clips.size(); i++ ){
+   for( int i = 0; i < clips.size(); i++ ){
       clips[i].select();
    }
 }
