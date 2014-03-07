@@ -54,6 +54,18 @@ void ofxTLClip::deselect(){
    selected = false;
 }
 
+void ofxTLClip::play(){
+   cerr << "Clip Playing" << endl;
+}
+
+void ofxTLClip::stop(){
+   cerr << "Clip Stopped" << endl;
+}
+
+void ofxTLClip::setPosition( long millis ){
+   cerr << "Clip Position set to: " << millis - timeRange.min <<endl;
+}
+
 ofxTLClipTrack::ofxTLClipTrack(){
 	
 }
@@ -82,7 +94,25 @@ void ofxTLClipTrack::disable(){
 //if timeline is set to thread this is called on the back thread so
 //be careful if loading images in herre
 void ofxTLClipTrack::update(){
-	
+   long thisTimelinePoint = currentTrackTime();
+   for(int i = 0; i < clips.size(); i++){
+      if( !timeline->getInOutRangeMillis().intersects(clips[i].timeRange) ){
+         //ignore clips outside of the playing range
+         continue;
+      }
+      if( clips[i].timeRange.contains( lastTimelinePoint ) &&
+          !clips[i].timeRange.contains( thisTimelinePoint ) ) {
+          clips[i].stop();
+      }
+      else if( clips[i].timeRange.contains( thisTimelinePoint ) &&
+               !clips[i].timeRange.contains( lastTimelinePoint ) ){
+         if( timeline->getIsPlaying() ){
+            clips[i].setPosition( thisTimelinePoint );
+            clips[i].play();
+         }
+      }
+   }
+   lastTimelinePoint = thisTimelinePoint;
 }
 
 //draw your track contents. use ofRectangle bounds to know where to draw
@@ -112,6 +142,27 @@ void ofxTLClipTrack::draw(){
          ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
 		}
 	}
+}
+
+void ofxTLClipTrack::playbackStarted(ofxTLPlaybackEventArgs& args){
+   ofxTLTrack::playbackStarted(args);
+   for(int i = 0; i < clips.size(); i++){
+      if( clips[i].timeRange.contains( currentTrackTime() ) ){
+         clips[i].setPosition( currentTrackTime() );
+         clips[i].play();
+      }
+   }
+}
+
+void ofxTLClipTrack::playbackEnded(ofxTLPlaybackEventArgs& args){
+   ofxTLTrack::playbackEnded(args);
+   for(int i = 0; i < clips.size(); i++){
+      clips[i].stop();
+   }
+}
+
+void ofxTLClipTrack::playbackLooped(ofxTLPlaybackEventArgs& args){
+   ofxTLTrack::playbackLooped(args);
 }
 
 //caled by the timeline, don't need to register events
@@ -159,6 +210,7 @@ void ofxTLClipTrack::mouseMoved(ofMouseEventArgs& args, long millis){
 }
 void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    if( isDraggingClips ){
+   //if click was initiated without shift pressed
       for( int i = 0; i < clips.size(); i++ ){
          if( clips[i].isSelected() ){
             clips[i].timeRange += millis - grabTimeOffset;

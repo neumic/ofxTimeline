@@ -43,6 +43,10 @@ class ofxTLClip {
       virtual bool isSelected();
       virtual void select();
       virtual void deselect();
+      virtual void play();
+      virtual void stop();
+      virtual void setPosition( long millis );
+
       ofLongRange timeRange;
    private:
       bool selected; 
@@ -68,6 +72,11 @@ class ofxTLClipTrack : public ofxTLTrack {
 	//draw your track contents. use ofRectangle bounds to know where to draw
 	//and the Track functions screenXToMillis() or millisToScreenX() to respect zoom
 	virtual void draw();
+
+
+   virtual void playbackStarted(ofxTLPlaybackEventArgs& args);
+   virtual void playbackLooped(ofxTLPlaybackEventArgs& args);
+   virtual void playbackEnded(ofxTLPlaybackEventArgs& args);
 
 	//called by the timeline, don't need to register events
 	//is called even if the click is not in the track,
@@ -120,4 +129,5 @@ class ofxTLClipTrack : public ofxTLTrack {
    bool isDraggingClips;
 	vector<ofxTLClip> clips;
    long grabTimeOffset;
+   long lastTimelinePoint;
 };
