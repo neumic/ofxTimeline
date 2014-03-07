@@ -284,6 +284,7 @@ int ofxTLClipTrack::getSelectedItemCount(){
          count++;
       }
    }
+   return count;
 }
 
 //return a unique name for your track
