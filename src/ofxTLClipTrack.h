@@ -90,6 +90,7 @@ class ofxTLClipTrack : public ofxTLTrack {
     virtual void regionSelected(ofLongRange timeRange, ofRange valueRange);
     virtual void unselectAll();
 	virtual void selectAll();
+   virtual int getSelectedItemCount();
 	
 	//return a unique name for your track
 	virtual string getTrackType();

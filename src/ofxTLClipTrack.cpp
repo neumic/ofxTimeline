@@ -32,6 +32,7 @@
 
 #include "ofxTLClipTrack.h"
 #include "ofxTimeline.h"
+#include "ofxHotKeys.h"
 
 ofxTLClip::ofxTLClip(){
    selected = false;
@@ -116,16 +117,28 @@ void ofxTLClipTrack::draw(){
 //caled by the timeline, don't need to register events
 bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 	createNewPoint = isActive();
+   if( !isActive() ){
+      return false;
+   }
+
+   if( !ofGetModifierSelection() ){
+      timeline->unselectAll();
+   }
 
    for( int i; i < clips.size(); i++ ){
       if( clips[i].isInside( millis ) ){
-         clips[i].select();
-         createNewPoint = false;
-      } else {
-         clips[i].deselect();
+         if( !ofGetModifierSelection() ){
+            clips[i].select();
+            createNewPoint = false;
+         } else {
+            if(clips[i].isSelected() ){
+               clips[i].deselect();
+            } else {
+               clips[i].select();
+            }
+         }
       }
    }
-
 	clickPoint = ofVec2f(args.x,args.y);
 	return createNewPoint; //signals that the click made a selection
 }
@@ -140,7 +153,7 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
 	
 	//need to create clicks on mouse up if the mouse hasn't moved in order to work
 	//well with the click-drag rectangle thing
-	if(createNewPoint && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
+	if(args.button == 2 && createNewPoint && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
 		ofxTLClip newClip;
 		//newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
 		newClip.timeRange = ofLongRange(millis, millis + 10000);
@@ -168,7 +181,7 @@ void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
    for( int i; i < clips.size(); i++ ){
       if( timeRange.contains( clips[i].timeRange ) ){
          clips[i].select();
-      } else {
+      } else if( !ofGetModifierSelection() ){
          clips[i].deselect();
       }
    }
@@ -183,6 +196,15 @@ void ofxTLClipTrack::unselectAll(){
 void ofxTLClipTrack::selectAll(){
    for( int i; i < clips.size(); i++ ){
       clips[i].select();
+   }
+}
+
+int ofxTLClipTrack::getSelectedItemCount(){
+   int count = 0;
+   for( int i = 0; i < clips.size(); i++ ){
+      if(clips[i].isSelected()){
+         count++;
+      }
    }
 }
 
