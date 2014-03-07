@@ -101,7 +101,7 @@ void ofxTLClipTrack::draw(){
 	for(int i = 0; i < clips.size(); i++){
 		float boxStart = millisToScreenX(clips[i].timeRange.min);
 		float boxWidth = millisToScreenX(clips[i].timeRange.max) - millisToScreenX(clips[i].timeRange.min);
-		if(boxStart > bounds.x && boxStart < bounds.x+bounds.width){
+		if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
 			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
 			//ofCircle(screenX, bounds.getMinY() + 10, 4);
          if( clips[i].isSelected() ){
