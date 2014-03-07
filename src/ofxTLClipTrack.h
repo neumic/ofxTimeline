@@ -117,5 +117,7 @@ class ofxTLClipTrack : public ofxTLTrack {
   protected:
 	ofVec2f clickPoint;
 	bool createNewPoint;
+   bool isDraggingClips;
 	vector<ofxTLClip> clips;
+   long grabTimeOffset;
 };

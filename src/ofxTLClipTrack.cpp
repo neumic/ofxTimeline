@@ -116,28 +116,39 @@ void ofxTLClipTrack::draw(){
 
 //caled by the timeline, don't need to register events
 bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
+   grabTimeOffset = millis;
 	createNewPoint = isActive();
+   isDraggingClips = !ofGetModifierSelection(); //only drag if clicked without shift
    if( !isActive() ){
       return false;
    }
 
-   if( !ofGetModifierSelection() ){
-      timeline->unselectAll();
-   }
+   bool shouldUnselectAll = true;
 
    for( int i; i < clips.size(); i++ ){
       if( clips[i].isInside( millis ) ){
+         shouldUnselectAll = false;
          if( !ofGetModifierSelection() ){
-            clips[i].select();
-            createNewPoint = false;
-         } else {
-            if(clips[i].isSelected() ){
-               clips[i].deselect();
-            } else {
+            //If the click is within this clip and shift isn't down
+            if( !clips[i].isSelected() ){
+               timeline->unselectAll();
                clips[i].select();
+               createNewPoint = false;
             }
          }
+         else {
+            //If the click is within this clip and shift is down
+            if(clips[i].isSelected() ){
+               clips[i].deselect();
+            }
+            else {
+               clips[i].select();
+            }
+         } 
       }
+   }
+   if( shouldUnselectAll ){
+      timeline->unselectAll();
    }
 	clickPoint = ofVec2f(args.x,args.y);
 	return createNewPoint; //signals that the click made a selection
@@ -147,10 +158,18 @@ void ofxTLClipTrack::mouseMoved(ofMouseEventArgs& args, long millis){
 	
 }
 void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
-	
+   if( isDraggingClips ){
+      for( int i = 0; i < clips.size(); i++ ){
+         if( clips[i].isSelected() ){
+            clips[i].timeRange += millis - grabTimeOffset;
+         }
+      }
+      grabTimeOffset = millis;
+   }
 }
 void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
-	
+	grabTimeOffset = 0;
+   isDraggingClips = false;
 	//need to create clicks on mouse up if the mouse hasn't moved in order to work
 	//well with the click-drag rectangle thing
 	if(args.button == 2 && createNewPoint && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
