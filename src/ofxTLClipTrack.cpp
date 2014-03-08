@@ -253,6 +253,12 @@ void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 	if(args.key == OF_KEY_DEL || args.key == OF_KEY_BACKSPACE){
 		clips.erase( remove_if( clips.begin(), clips.end(), clipIsSelected), clips.end() );
 	}
+	if(drawingColorWindow){
+		if(args.key == OF_KEY_RETURN){
+			timeline->dismissedModalContent();
+			drawingModalBox = false;
+		}
+	}
 }
 void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
 	
