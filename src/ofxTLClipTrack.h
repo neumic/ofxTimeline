@@ -72,6 +72,7 @@ class ofxTLClipTrack : public ofxTLTrack {
 	//draw your track contents. use ofRectangle bounds to know where to draw
 	//and the Track functions screenXToMillis() or millisToScreenX() to respect zoom
 	virtual void draw();
+   virtual void drawModalContent();
 
 
    virtual void playbackStarted(ofxTLPlaybackEventArgs& args);
@@ -127,7 +128,15 @@ class ofxTLClipTrack : public ofxTLTrack {
 	ofVec2f clickPoint;
 	bool createNewPoint;
    bool isDraggingClips;
+
+   bool drawingModalBox;
+   ofRectangle modalBox;
+
 	vector<ofxTLClip> clips;
+
+   ofxTLClip* selectedClip = NULL;
+
    long grabTimeOffset;
    long lastTimelinePoint;
+
 };

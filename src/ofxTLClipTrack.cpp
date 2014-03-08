@@ -138,6 +138,23 @@ void ofxTLClipTrack::draw(){
 	}
 }
 
+void ofxTLClipTrack::drawModalContent(){
+   if(drawingModalBox){
+      if( selectedClip == NULL ){
+         drawingModalBox = false;
+         timeline->dismissedModalContent();
+         return;
+      }
+      ofPushStyle();
+      ofFill();
+      ofSetColor(255);
+
+      modalBox = ofRectangle( millisToScreenX( selectedClip->timeRange.min ), bounds.y+bounds.height, 200, 200);
+      ofRect( modalBox );
+      ofPopStyle();
+   }
+}
+
 void ofxTLClipTrack::playbackStarted(ofxTLPlaybackEventArgs& args){
    ofxTLTrack::playbackStarted(args);
    for(int i = 0; i < clips.size(); i++){
