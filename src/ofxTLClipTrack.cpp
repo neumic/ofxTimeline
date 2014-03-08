@@ -36,7 +36,7 @@
 #include "ofSystemUtils.h"
 
 ofxTLClip::ofxTLClip(){
-   selected = false;
+   selected = true;
    filePath = "";
    fileName = "No File Loaded";
 }
@@ -319,7 +319,11 @@ void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 	}
 }
 void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
-	
+   for( int i = 0; i < clips.size(); i++ ){
+      if( clips[i].isSelected() ){
+         clips[i].timeRange += timeline->getDurationInMilliseconds() * nudgePercent.x;
+      }
+   }
 }
 
 //if your track has some selectable elements you can interface with snapping
