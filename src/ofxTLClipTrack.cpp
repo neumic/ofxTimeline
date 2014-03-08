@@ -178,6 +178,14 @@ void ofxTLClipTrack::playbackLooped(ofxTLPlaybackEventArgs& args){
 
 //caled by the timeline, don't need to register events
 bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
+	if(drawingModalBox){
+		clickedInModalBox = args.button == 0 && modalBox.inside(args.x, args.y);
+		if(clickedInModalBox){
+         //do button stuffs
+		}
+		return true;
+	}
+
    grabTimeOffset = millis;
 	createNewPoint = isActive();
    isDraggingClips = !ofGetModifierSelection(); //only drag if clicked without shift
@@ -190,12 +198,12 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
    for( int i = 0; i < clips.size(); i++ ){
       if( clips[i].isInside( millis ) ){
          shouldUnselectAll = false;
+         createNewPoint = false;
          if( !ofGetModifierSelection() ){
             //If the click is within this clip and shift isn't down
             if( !clips[i].isSelected() ){
                timeline->unselectAll();
                clips[i].select();
-               createNewPoint = false;
             }
          }
          else {
@@ -231,21 +239,38 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    }
 }
 void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
+   if( drawingModalBox && !clickedInModalBox ){
+      timeline->dismissedModalContent();
+      drawingModalBox = false;
+      return;
+   }
+
 	grabTimeOffset = 0;
    isDraggingClips = false;
 	//need to create clicks on mouse up if the mouse hasn't moved in order to work
 	//well with the click-drag rectangle thing
-	if(args.button == 2 && createNewPoint && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
-		ofxTLClip newClip;
-		//newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
-		newClip.timeRange = ofLongRange(millis, millis + 10000);
-		clips.push_back(newClip);
-      selectedClip = &clips.back();
-      drawingModalBox = true;
-      timeline->presentedModalContent(this);
-		//call this on mouseup or keypressed after a click 
-		//will trigger save and needed for undo
-		timeline->flagTrackModified(this);
+	if(args.button == 2 && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
+      if( createNewPoint ){
+         ofxTLClip newClip;
+         //newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
+         newClip.timeRange = ofLongRange(millis, millis + 10000);
+         clips.push_back(newClip);
+         selectedClip = &clips.back();
+         drawingModalBox = true;
+         timeline->presentedModalContent(this);
+         //call this on mouseup or keypressed after a click 
+         //will trigger save and needed for undo
+         timeline->flagTrackModified(this);
+      }
+      else{
+         for( int i = 0; i < clips.size(); i++ ){
+            if( clips[i].isSelected() && clips[i].timeRange.contains( millis ) ){
+               selectedClip = &clips[i];
+               drawingModalBox = true;
+               timeline->presentedModalContent(this);
+            }
+         }
+      }
 	}
 }
 

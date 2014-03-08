@@ -128,6 +128,7 @@ class ofxTLClipTrack : public ofxTLTrack {
 	ofVec2f clickPoint;
 	bool createNewPoint;
    bool isDraggingClips;
+   bool clickedInModalBox;
 
    bool drawingModalBox;
    ofRectangle modalBox;
