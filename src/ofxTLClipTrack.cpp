@@ -37,7 +37,8 @@
 
 ofxTLClip::ofxTLClip(){
    selected = false;
-   filePath = "testfoo";
+   filePath = "";
+   fileName = "No File Loaded";
 }
 
 bool ofxTLClip::isInside( long millis ){
@@ -68,14 +69,20 @@ void ofxTLClip::setPosition( long millis ){
    cerr << "Clip Position set to: " << millis - timeRange.min <<endl;
 }
 
-bool ofxTLClip::loadFile( std::string path ){
+bool ofxTLClip::loadFile( string path ){
    filePath = path;
+   fileName = ofFilePath::getFileName( filePath );
    return true;
 }
 
-std::string ofxTLClip::getFilePath(){
+string ofxTLClip::getFilePath(){
    return filePath;
 }
+
+string ofxTLClip::getFileName(){
+   return fileName;
+}
+
 
 ofxTLClipTrack::ofxTLClipTrack(){
 	
@@ -160,10 +167,13 @@ void ofxTLClipTrack::drawModalContent(){
       ofFill();
       ofSetColor(255);
 
-      modalBox = ofRectangle( millisToScreenX( selectedClip->timeRange.min ), bounds.y+bounds.height, 100, 20);
+      OFX_TIMELINE_FONT_RENDERER font = timeline -> getFont();
+      modalBox = ofRectangle( millisToScreenX( selectedClip->timeRange.min ),
+                              bounds.y+bounds.height,
+                              font.stringWidth( selectedClip->getFileName() ) + 10, 20);
       ofRect( modalBox );
       ofSetColor(20, 20, 20);
-      timeline->getFont().drawString( selectedClip->getFilePath(),
+      timeline->getFont().drawString( selectedClip->getFileName(),
          modalBox.x + 5, modalBox.y + 15);
       ofPopStyle();
    }

@@ -48,11 +48,13 @@ class ofxTLClip {
       virtual void setPosition( long millis );
       virtual bool loadFile( string path );
       virtual string getFilePath();
+      virtual string getFileName();
 
       ofLongRange timeRange;
    private:
       bool selected; 
       string filePath;
+      string fileName;
 };
 
 class ofxTLClipTrack : public ofxTLTrack {
