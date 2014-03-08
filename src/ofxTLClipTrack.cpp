@@ -240,6 +240,9 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
 		//newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
 		newClip.timeRange = ofLongRange(millis, millis + 10000);
 		clips.push_back(newClip);
+      selectedClip = &clips.back();
+      drawingModalBox = true;
+      timeline->presentedModalContent(this);
 		//call this on mouseup or keypressed after a click 
 		//will trigger save and needed for undo
 		timeline->flagTrackModified(this);
@@ -253,7 +256,7 @@ void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 	if(args.key == OF_KEY_DEL || args.key == OF_KEY_BACKSPACE){
 		clips.erase( remove_if( clips.begin(), clips.end(), clipIsSelected), clips.end() );
 	}
-	if(drawingColorWindow){
+	if(drawingModalBox){
 		if(args.key == OF_KEY_RETURN){
 			timeline->dismissedModalContent();
 			drawingModalBox = false;
