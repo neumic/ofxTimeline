@@ -33,9 +33,11 @@
 #include "ofxTLClipTrack.h"
 #include "ofxTimeline.h"
 #include "ofxHotKeys.h"
+#include "ofSystemUtils.h"
 
 ofxTLClip::ofxTLClip(){
    selected = false;
+   filePath = "testfoo";
 }
 
 bool ofxTLClip::isInside( long millis ){
@@ -64,6 +66,15 @@ void ofxTLClip::stop(){
 
 void ofxTLClip::setPosition( long millis ){
    cerr << "Clip Position set to: " << millis - timeRange.min <<endl;
+}
+
+bool ofxTLClip::loadFile( std::string path ){
+   filePath = path;
+   return true;
+}
+
+std::string ofxTLClip::getFilePath(){
+   return filePath;
 }
 
 ofxTLClipTrack::ofxTLClipTrack(){
@@ -149,8 +160,11 @@ void ofxTLClipTrack::drawModalContent(){
       ofFill();
       ofSetColor(255);
 
-      modalBox = ofRectangle( millisToScreenX( selectedClip->timeRange.min ), bounds.y+bounds.height, 200, 200);
+      modalBox = ofRectangle( millisToScreenX( selectedClip->timeRange.min ), bounds.y+bounds.height, 100, 20);
       ofRect( modalBox );
+      ofSetColor(20, 20, 20);
+      timeline->getFont().drawString( selectedClip->getFilePath(),
+         modalBox.x + 5, modalBox.y + 15);
       ofPopStyle();
    }
 }
@@ -239,10 +253,16 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    }
 }
 void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
-   if( drawingModalBox && !clickedInModalBox ){
-      timeline->dismissedModalContent();
-      drawingModalBox = false;
-      return;
+   if( drawingModalBox ){
+      if( !clickedInModalBox ){
+         timeline->dismissedModalContent();
+         drawingModalBox = false;
+         return;
+      }
+      else{
+         selectedClip->loadFile( ofSystemLoadDialog( "Load Clip" ).getPath() );
+      }
+         
    }
 
 	grabTimeOffset = 0;

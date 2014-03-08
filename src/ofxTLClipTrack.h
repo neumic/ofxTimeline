@@ -46,10 +46,13 @@ class ofxTLClip {
       virtual void play();
       virtual void stop();
       virtual void setPosition( long millis );
+      virtual bool loadFile( string path );
+      virtual string getFilePath();
 
       ofLongRange timeRange;
    private:
       bool selected; 
+      string filePath;
 };
 
 class ofxTLClipTrack : public ofxTLTrack {
