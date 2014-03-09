@@ -37,6 +37,7 @@
 
 ofxTLClip::ofxTLClip(){
    selected = true;
+   movedSinceUpdate = true;
    filePath = "";
    fileName = "No File Loaded";
 }
@@ -118,17 +119,20 @@ void ofxTLClipTrack::update(){
          //ignore clips outside of the playing range
          continue;
       }
-      if( clips[i] -> timeRange.contains( lastTimelinePoint ) &&
+      if( ( clips[i] -> timeRange.contains( lastTimelinePoint ) ||
+            clips[i] -> movedSinceUpdate ) &&
           !clips[i] -> timeRange.contains( thisTimelinePoint ) ) {
           clips[i] -> stop();
       }
       else if( clips[i] -> timeRange.contains( thisTimelinePoint ) &&
-               !clips[i] -> timeRange.contains( lastTimelinePoint ) ){
+               (!clips[i] -> timeRange.contains( lastTimelinePoint ) ||
+                 clips[i] -> movedSinceUpdate ) ){
          if( timeline->getIsPlaying() ){
             clips[i] -> setPosition( thisTimelinePoint );
             clips[i] -> play();
          }
       }
+      clips[i] -> movedSinceUpdate = false;
    }
    lastTimelinePoint = thisTimelinePoint;
 }
@@ -257,6 +261,7 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
       for( int i = 0; i < clips.size(); i++ ){
          if( clips[i] -> isSelected() ){
             clips[i] -> timeRange += millis - grabTimeOffset;
+            clips[i] -> movedSinceUpdate = true;
          }
       }
       grabTimeOffset = millis;
@@ -321,6 +326,7 @@ void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
    for( int i = 0; i < clips.size(); i++ ){
       if( clips[i] -> isSelected() ){
          clips[i] -> timeRange += timeline->getDurationInMilliseconds() * nudgePercent.x;
+         clips[i] -> movedSinceUpdate = true;
       }
    }
 }

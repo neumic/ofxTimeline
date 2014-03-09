@@ -60,14 +60,17 @@ void ofxTLAudioClip::setPosition( long millis ){
 }
 
 bool ofxTLAudioClip::loadFile( string path ){
+   player.stop();
    if(player.loadSound(path, false)){
       ofxTLClip::loadFile( path );
       player.getSpectrum(defaultSpectrumBandwidth);
       player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
       timeRange.setMax( timeRange.min + player.getDuration() *1000 );
       fileLoaded = true;
+      movedSinceUpdate = true;
       return true;
    }
+   movedSinceUpdate = true;
    return false;
 }
 

@@ -50,6 +50,7 @@ class ofxTLClip {
       virtual string getFilePath();
       virtual string getFileName();
 
+      bool movedSinceUpdate;
       ofLongRange timeRange;
    private:
       bool selected; 
