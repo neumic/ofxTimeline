@@ -55,7 +55,7 @@ void ofxTLAudioClip::stop(){
 
 void ofxTLAudioClip::setPosition( long millis ){
    if( fileLoaded ){
-      player.setPositionMS( millis );
+      player.setPositionMS( millis - timeRange.min );
    }
 }
 
@@ -65,6 +65,7 @@ bool ofxTLAudioClip::loadFile( string path ){
       player.getSpectrum(defaultSpectrumBandwidth);
       player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
       timeRange.setMax( timeRange.min + player.getDuration() *1000 );
+      fileLoaded = true;
       return true;
    }
    return false;
