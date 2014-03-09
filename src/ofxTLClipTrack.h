@@ -46,10 +46,13 @@ class ofxTLClip {
       virtual void play();
       virtual void stop();
       virtual void setPosition( long millis );
+      virtual void clampedMove( long millisOffset, long lower, long upper);
+      virtual void clampedGrabMove( long millisOffset, long lower, long upper);
       virtual bool loadFile( string path );
       virtual string getFilePath();
       virtual string getFileName();
 
+      long grabTime;
       bool movedSinceUpdate;
       ofLongRange timeRange;
    private:
@@ -145,7 +148,7 @@ class ofxTLClipTrack : public ofxTLTrack {
 
    ofxTLClip* selectedClip = NULL;
 
-   long grabTimeOffset;
+   long grabTime;
    long lastTimelinePoint;
 
 };

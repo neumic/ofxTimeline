@@ -70,6 +70,30 @@ void ofxTLClip::setPosition( long millis ){
    cerr << "Clip Position set to: " << millis - timeRange.min <<endl;
 }
 
+void ofxTLClip::clampedMove( long millisOffset, long lower, long upper ){
+   //Moves clip, but not past boundaries
+   millisOffset = min( millisOffset, upper - timeRange.max );
+   millisOffset = max( millisOffset, lower - timeRange.min );
+   timeRange += millisOffset;
+   if( millisOffset != 0 ){
+      movedSinceUpdate = true;
+   }
+}
+
+void ofxTLClip::clampedGrabMove( long millisOffset, long lower, long upper ){
+   //Moves clip begining to millis, but not past boundaries
+   long millis = grabTime + millisOffset;
+   long clipLength = timeRange.span();
+   if( millis < 0 ){
+      millis = 0;
+   }
+   else if( millis > upper - clipLength ){
+      millis = upper - clipLength;
+   }
+   timeRange.set( millis, millis + clipLength );
+   movedSinceUpdate = true;
+}
+
 bool ofxTLClip::loadFile( string path ){
    filePath = path;
    fileName = ofFilePath::getFileName( filePath );
@@ -214,7 +238,12 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 		return true;
 	}
 
-   grabTimeOffset = millis;
+   for( int i = 0; i < clips.size(); i++ ){
+      if( clips[i] -> isSelected() ){
+         clips[i] -> grabTime = clips[i] -> timeRange.min;
+      }
+   }
+   grabTime= millis;
 	createNewPoint = isActive();
    isDraggingClips = !ofGetModifierSelection(); //only drag if clicked without shift
    if( !isActive() ){
@@ -260,11 +289,10 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    //if click was initiated without shift pressed
       for( int i = 0; i < clips.size(); i++ ){
          if( clips[i] -> isSelected() ){
-            clips[i] -> timeRange += millis - grabTimeOffset;
-            clips[i] -> movedSinceUpdate = true;
+            clips[i] -> clampedGrabMove( millis - grabTime, 0, 
+                                     timeline -> getDurationInMilliseconds() );
          }
       }
-      grabTimeOffset = millis;
    }
 }
 void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
@@ -280,7 +308,7 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
          
    }
 
-	grabTimeOffset = 0;
+	grabTime = 0;
    isDraggingClips = false;
 	//need to create clicks on mouse up if the mouse hasn't moved in order to work
 	//well with the click-drag rectangle thing
@@ -325,8 +353,10 @@ void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
    for( int i = 0; i < clips.size(); i++ ){
       if( clips[i] -> isSelected() ){
-         clips[i] -> timeRange += timeline->getDurationInMilliseconds() * nudgePercent.x;
-         clips[i] -> movedSinceUpdate = true;
+         clips[i] -> clampedMove(
+            timeline->getDurationInMilliseconds() * nudgePercent.x,
+            0, timeline->getDurationInMilliseconds()
+         );
       }
    }
 }
