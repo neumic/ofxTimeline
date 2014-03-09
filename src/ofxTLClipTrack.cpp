@@ -114,19 +114,19 @@ void ofxTLClipTrack::disable(){
 void ofxTLClipTrack::update(){
    long thisTimelinePoint = currentTrackTime();
    for(int i = 0; i < clips.size(); i++){
-      if( !timeline->getInOutRangeMillis().intersects(clips[i].timeRange) ){
+      if( !timeline->getInOutRangeMillis().intersects(clips[i] -> timeRange) ){
          //ignore clips outside of the playing range
          continue;
       }
-      if( clips[i].timeRange.contains( lastTimelinePoint ) &&
-          !clips[i].timeRange.contains( thisTimelinePoint ) ) {
-          clips[i].stop();
+      if( clips[i] -> timeRange.contains( lastTimelinePoint ) &&
+          !clips[i] -> timeRange.contains( thisTimelinePoint ) ) {
+          clips[i] -> stop();
       }
-      else if( clips[i].timeRange.contains( thisTimelinePoint ) &&
-               !clips[i].timeRange.contains( lastTimelinePoint ) ){
+      else if( clips[i] -> timeRange.contains( thisTimelinePoint ) &&
+               !clips[i] -> timeRange.contains( lastTimelinePoint ) ){
          if( timeline->getIsPlaying() ){
-            clips[i].setPosition( thisTimelinePoint );
-            clips[i].play();
+            clips[i] -> setPosition( thisTimelinePoint );
+            clips[i] -> play();
          }
       }
    }
@@ -141,12 +141,12 @@ void ofxTLClipTrack::draw(){
 	ofPushStyle();
 	ofNoFill();
 	for(int i = 0; i < clips.size(); i++){
-		float boxStart = millisToScreenX(clips[i].timeRange.min);
-		float boxWidth = millisToScreenX(clips[i].timeRange.max) - millisToScreenX(clips[i].timeRange.min);
+		float boxStart = millisToScreenX(clips[i] -> timeRange.min);
+		float boxWidth = millisToScreenX(clips[i] -> timeRange.max) - millisToScreenX(clips[i] -> timeRange.min);
 		if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
 			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
 			//ofCircle(screenX, bounds.getMinY() + 10, 4);
-         if( clips[i].isSelected() ){
+         if( clips[i] -> isSelected() ){
             ofSetColor(timeline->getColors().textColor);
          } else {
             ofSetColor(timeline->getColors().keyColor);
@@ -182,9 +182,9 @@ void ofxTLClipTrack::drawModalContent(){
 void ofxTLClipTrack::playbackStarted(ofxTLPlaybackEventArgs& args){
    ofxTLTrack::playbackStarted(args);
    for(int i = 0; i < clips.size(); i++){
-      if( clips[i].timeRange.contains( currentTrackTime() ) ){
-         clips[i].setPosition( currentTrackTime() );
-         clips[i].play();
+      if( clips[i] -> timeRange.contains( currentTrackTime() ) ){
+         clips[i] -> setPosition( currentTrackTime() );
+         clips[i] -> play();
       }
    }
 }
@@ -192,7 +192,7 @@ void ofxTLClipTrack::playbackStarted(ofxTLPlaybackEventArgs& args){
 void ofxTLClipTrack::playbackEnded(ofxTLPlaybackEventArgs& args){
    ofxTLTrack::playbackEnded(args);
    for(int i = 0; i < clips.size(); i++){
-      clips[i].stop();
+      clips[i] -> stop();
    }
 }
 
@@ -220,23 +220,23 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
    bool shouldUnselectAll = true;
 
    for( int i = 0; i < clips.size(); i++ ){
-      if( clips[i].isInside( millis ) ){
+      if( clips[i] -> isInside( millis ) ){
          shouldUnselectAll = false;
          createNewPoint = false;
          if( !ofGetModifierSelection() ){
             //If the click is within this clip and shift isn't down
-            if( !clips[i].isSelected() ){
+            if( !clips[i] -> isSelected() ){
                timeline->unselectAll();
-               clips[i].select();
+               clips[i] -> select();
             }
          }
          else {
             //If the click is within this clip and shift is down
-            if(clips[i].isSelected() ){
-               clips[i].deselect();
+            if(clips[i] -> isSelected() ){
+               clips[i] -> deselect();
             }
             else {
-               clips[i].select();
+               clips[i] -> select();
             }
          } 
       }
@@ -255,8 +255,8 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    if( isDraggingClips ){
    //if click was initiated without shift pressed
       for( int i = 0; i < clips.size(); i++ ){
-         if( clips[i].isSelected() ){
-            clips[i].timeRange += millis - grabTimeOffset;
+         if( clips[i] -> isSelected() ){
+            clips[i] -> timeRange += millis - grabTimeOffset;
          }
       }
       grabTimeOffset = millis;
@@ -281,11 +281,10 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
 	//well with the click-drag rectangle thing
 	if(args.button == 2 && clickPoint.distance(ofVec2f(args.x, args.y)) < 4){
       if( createNewPoint ){
-         ofxTLClip newClip;
+         selectedClip = newClip();
          //newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
-         newClip.timeRange = ofLongRange(millis, millis + 10000);
-         clips.push_back(newClip);
-         selectedClip = &clips.back();
+         selectedClip -> timeRange = ofLongRange(millis, millis + 10000);
+         clips.push_back(selectedClip);
          drawingModalBox = true;
          timeline->presentedModalContent(this);
          //call this on mouseup or keypressed after a click 
@@ -294,8 +293,8 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
       }
       else{
          for( int i = 0; i < clips.size(); i++ ){
-            if( clips[i].isSelected() && clips[i].timeRange.contains( millis ) ){
-               selectedClip = &clips[i];
+            if( clips[i] -> isSelected() && clips[i] -> timeRange.contains( millis ) ){
+               selectedClip = clips[i];
                drawingModalBox = true;
                timeline->presentedModalContent(this);
             }
@@ -309,7 +308,7 @@ bool clipIsSelected( ofxTLClip clip ){return clip.isSelected();}
 //keys pressed events, and nuding from arrow keys with normalized nudge amount 0 - 1.0
 void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 	if(args.key == OF_KEY_DEL || args.key == OF_KEY_BACKSPACE){
-		clips.erase( remove_if( clips.begin(), clips.end(), clipIsSelected), clips.end() );
+		//clips.erase( remove_if( clips.begin(), clips.end(), clipIsSelected), clips.end() );
 	}
 	if(drawingModalBox){
 		if(args.key == OF_KEY_RETURN){
@@ -320,8 +319,8 @@ void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 }
 void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
    for( int i = 0; i < clips.size(); i++ ){
-      if( clips[i].isSelected() ){
-         clips[i].timeRange += timeline->getDurationInMilliseconds() * nudgePercent.x;
+      if( clips[i] -> isSelected() ){
+         clips[i] -> timeRange += timeline->getDurationInMilliseconds() * nudgePercent.x;
       }
    }
 }
@@ -331,39 +330,39 @@ void ofxTLClipTrack::nudgeBy(ofVec2f nudgePercent){
 void ofxTLClipTrack::getSnappingPoints(set<unsigned long long>& points){
    for( int i = 0; i < clips.size(); i++){
       //TODO check if the clip is in bounds as well
-      if( !clips[i].isSelected() ){
-         points.insert(clips[i].timeRange.min);
-         points.insert(clips[i].timeRange.max);
+      if( !clips[i] -> isSelected() ){
+         points.insert(clips[i] -> timeRange.min);
+         points.insert(clips[i] -> timeRange.max);
       }
    }
 }
 
 void ofxTLClipTrack::regionSelected(ofLongRange timeRange, ofRange valueRange){
    for( int i = 0; i < clips.size(); i++ ){
-      if( timeRange.contains( clips[i].timeRange ) ){
-         clips[i].select();
+      if( timeRange.contains( clips[i] -> timeRange ) ){
+         clips[i] -> select();
       } else if( !ofGetModifierSelection() ){
-         clips[i].deselect();
+         clips[i] -> deselect();
       }
    }
 }
 
 void ofxTLClipTrack::unselectAll(){
    for( int i = 0; i < clips.size(); i++ ){
-      clips[i].deselect();
+      clips[i] -> deselect();
    }
 }
 
 void ofxTLClipTrack::selectAll(){
    for( int i = 0; i < clips.size(); i++ ){
-      clips[i].select();
+      clips[i] -> select();
    }
 }
 
 int ofxTLClipTrack::getSelectedItemCount(){
    int count = 0;
    for( int i = 0; i < clips.size(); i++ ){
-      if(clips[i].isSelected()){
+      if(clips[i] -> isSelected()){
          count++;
       }
    }
@@ -413,4 +412,9 @@ void ofxTLClipTrack::load(){
 
 void ofxTLClipTrack::clear(){
 	
+}
+
+ofxTLClip* ofxTLClipTrack::newClip(){
+   //To be overridden
+   return new ofxTLClip();
 }

@@ -129,6 +129,8 @@ class ofxTLClipTrack : public ofxTLTrack {
 	virtual void load();
 	virtual void clear();
 
+   virtual ofxTLClip* newClip();
+
   protected:
 	ofVec2f clickPoint;
 	bool createNewPoint;
@@ -138,7 +140,7 @@ class ofxTLClipTrack : public ofxTLTrack {
    bool drawingModalBox;
    ofRectangle modalBox;
 
-	vector<ofxTLClip> clips;
+	vector<ofxTLClip*> clips;
 
    ofxTLClip* selectedClip = NULL;
 
