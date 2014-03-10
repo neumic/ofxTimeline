@@ -82,16 +82,8 @@ void ofxTLClip::clampedMove( long millisOffset, long lower, long upper ){
 
 void ofxTLClip::clampedGrabMove( long millisOffset, long lower, long upper ){
    //Moves clip begining to millis, but not past boundaries
-   long millis = grabTime + millisOffset;
-   long clipLength = timeRange.span();
-   if( millis < 0 ){
-      millis = 0;
-   }
-   else if( millis > upper - clipLength ){
-      millis = upper - clipLength;
-   }
-   timeRange.set( millis, millis + clipLength );
-   movedSinceUpdate = true;
+   millisOffset = (grabTime + millisOffset) - timeRange.min;
+   clampedMove( millisOffset, lower, upper );
 }
 
 bool ofxTLClip::loadFile( string path ){
