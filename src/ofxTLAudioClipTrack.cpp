@@ -39,6 +39,7 @@ ofxTLAudioClip::ofxTLAudioClip() {
    fileLoaded = false;
    lastFFTPosition = -1;
    defaultSpectrumBandwidth = 1024;
+   shouldRecomputePreview = true;
 }
 
 void ofxTLAudioClip::play(){
@@ -59,6 +60,11 @@ void ofxTLAudioClip::setPosition( long millis ){
    }
 }
 
+void ofxTLAudioClip::clampedMove( long millisOffset, long lower, long upper){
+   ofxTLClip::clampedMove( millisOffset, lower, upper);
+   shouldRecomputePreview = true;
+}
+
 bool ofxTLAudioClip::loadFile( string path ){
    player.stop();
    if(player.loadSound(path, false)){
@@ -67,11 +73,87 @@ bool ofxTLAudioClip::loadFile( string path ){
       player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
       timeRange.setMax( timeRange.min + player.getDuration() *1000 );
       fileLoaded = true;
+      shouldRecomputePreview = true;
       movedSinceUpdate = true;
       return true;
    }
    movedSinceUpdate = true;
    return false;
+}
+
+void ofxTLAudioClip::recomputePreview( int width, ofFloatRange posVisRange){
+   previews.clear();
+   if( width < 5 ){
+      return;
+   }
+
+   float trackHeight = 100/(1+player.getNumChannels());
+   int numChannels = player.getNumChannels();
+   vector<short> & buffer  = player.getBuffer();
+   int numSamples = buffer.size() / numChannels;
+   int frameSize = (numSamples * posVisRange.span()) / width;
+   int stepSize  = 2 + (frameSize / 60);//this number is magic. It seems about right
+
+   for(int c = 0; c < numChannels; c++){
+      ofPolyline preview;
+      int lastFrameIndex = 0;
+      float trackCenter = trackHeight * (c+1);
+      preview.resize(width*2);
+      for(int i = 0; i < width; i++){
+         float pointInTrack = ofMap( i, 0, width, posVisRange.min, posVisRange.max );
+
+         ofPoint * vertex = & preview.getVertices()[ i * 2 ];
+
+         if(pointInTrack >= 0 && pointInTrack <= 1.0){
+            int frameIndex = pointInTrack * numSamples;
+            float losample = 0;
+            float hisample = 0;
+            for(long f = lastFrameIndex; f < frameIndex; f+=stepSize) {
+               int sampleIndex = f * numChannels + c;
+               float subpixelSample = buffer[sampleIndex]/32565.0;
+               if(subpixelSample < losample) {
+                  losample = subpixelSample;
+               }
+               if(subpixelSample > hisample) {
+                  hisample = subpixelSample;
+               }
+            }
+
+            if(losample == 0 && hisample == 0){
+               vertex->x = i;
+               vertex->y = trackCenter;
+               vertex++;
+            }
+            else {
+               if(losample != 0){
+                  vertex->x = i;
+                  vertex->y = trackCenter - losample * trackHeight*.5;
+                  vertex++;
+               }
+               if(hisample != 0){
+                  vertex->x = i;
+                  vertex->y = trackCenter - hisample * trackHeight*.5;
+                  vertex++;
+               }
+            }
+
+            while (vertex < & preview.getVertices()[ i * 2 ] + 2) {
+               *vertex = *(vertex-1);
+               vertex++;
+            }
+
+            lastFrameIndex = frameIndex;
+         }
+         else{
+            *vertex++ = ofPoint(i,trackCenter);
+            *vertex++ = ofPoint(i,trackCenter);
+         }
+      }
+      preview.simplify();
+      previews.push_back(preview);
+   }
+   //computedZoomBounds = zoomBounds;
+   shouldRecomputePreview = false;
 }
 
 ofxTLAudioClipTrack::ofxTLAudioClipTrack(){
@@ -86,20 +168,40 @@ void ofxTLAudioClipTrack::draw(){
 	//this is just a simple example
 	ofPushStyle();
 	ofNoFill();
+
+   ofxTLAudioClip* clip;
 	for(int i = 0; i < clips.size(); i++){
-		float boxStart = millisToScreenX(clips[i] -> timeRange.min);
-		float boxWidth = millisToScreenX(clips[i] -> timeRange.max) - millisToScreenX(clips[i] -> timeRange.min);
+      clip = (ofxTLAudioClip*)clips[i];
+		float boxStart = millisToScreenX(clip -> timeRange.min);
+		float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
 		if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
 			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
 			//ofCircle(screenX, bounds.getMinY() + 10, 4);
-         if( clips[i] -> isSelected() ){
+         if( clip -> isSelected() ){
             ofSetColor(timeline->getColors().textColor);
          } else {
             ofSetColor(timeline->getColors().keyColor);
          }
          ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
 		}
-	}
+      if( clip->fileLoaded ){
+         ofSetColor(ofColor( 50, 50, 50, 50 ));
+         if(clip->shouldRecomputePreview || viewIsDirty){
+            clip->recomputePreview(boxWidth, ofFloatRange(0,1));
+         }
+
+         //draw preview
+         for(int j = 0; j < clip->previews.size(); j++){
+            ofPushMatrix();
+            ofTranslate( boxStart, bounds.y, 0);
+            //ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
+            ofScale( 1, bounds.height/100, 1 );
+            clip->previews[j].draw();
+            ofPopMatrix();
+         }
+      }
+   }
+   ofPopStyle();
 }
 
 
