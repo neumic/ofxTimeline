@@ -295,7 +295,10 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
          return;
       }
       else{
-         selectedClip->loadFile( ofSystemLoadDialog( "Load Clip" ).getPath() );
+         if( selectedClip->loadFile( ofSystemLoadDialog( "Load Clip" ).getPath() ) ){
+            timeline->dismissedModalContent();
+            drawingModalBox = false;
+         }
       }
          
    }
