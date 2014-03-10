@@ -333,7 +333,16 @@ bool clipIsSelected( ofxTLClip clip ){return clip.isSelected();}
 //keys pressed events, and nuding from arrow keys with normalized nudge amount 0 - 1.0
 void ofxTLClipTrack::keyPressed(ofKeyEventArgs& args){
 	if(args.key == OF_KEY_DEL || args.key == OF_KEY_BACKSPACE){
-		//clips.erase( remove_if( clips.begin(), clips.end(), clipIsSelected), clips.end() );
+      //TODO: Fix this crude hacky delete
+      ofxTLClip* deleteMe = new ofxTLClip;
+      for( int i = 0; i < clips.size(); i++ ){
+         if( clips[i] -> isSelected() ){
+            delete clips[i];
+            clips[i] = deleteMe;
+         }
+      }
+		clips.erase( remove( clips.begin(), clips.end(), deleteMe), clips.end() );
+      delete deleteMe;
 	}
 	if(drawingModalBox){
 		if(args.key == OF_KEY_RETURN){
