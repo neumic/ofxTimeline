@@ -235,9 +235,10 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
          clips[i] -> grabTime = clips[i] -> timeRange.min;
       }
    }
-   grabTime= millis;
+   grabTime = millis;
 	createNewPoint = isActive();
    isDraggingClips = !ofGetModifierSelection(); //only drag if clicked without shift
+
    if( !isActive() ){
       return false;
    }
@@ -248,6 +249,7 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
       if( clips[i] -> isInside( millis ) ){
          shouldUnselectAll = false;
          createNewPoint = false;
+         selectedClip = clips[i];
          if( !ofGetModifierSelection() ){
             //If the click is within this clip and shift isn't down
             if( !clips[i] -> isSelected() ){
@@ -259,6 +261,7 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
             //If the click is within this clip and shift is down
             if(clips[i] -> isSelected() ){
                clips[i] -> deselect();
+               selectedClip = NULL;
             }
             else {
                clips[i] -> select();
@@ -269,6 +272,25 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
    if( shouldUnselectAll ){
       timeline->unselectAll();
    }
+
+   if( selectedClip != NULL ){
+      //if we're in the first or last 20 secs of clip, snap to the closer edge,
+      //otherwise don't snap at all.
+      //TODO: This isn't very good, since there's no indication of when it's
+      //going to snap or not. Also, 20 sec is a variable number of pixels
+      if( grabTime <= selectedClip->timeRange.center() &&
+          grabTime <= selectedClip->timeRange.min + 20000){
+         timeline->setDragTimeOffset(grabTime - selectedClip->timeRange.min);
+      }
+      else if( grabTime > selectedClip->timeRange.center() &&
+               grabTime > selectedClip->timeRange.max - 20000){
+         timeline->setDragTimeOffset(grabTime - selectedClip->timeRange.max);
+      }
+      else{
+         timeline->cancelSnapping(); 
+      }
+   }
+
 	clickPoint = ofVec2f(args.x,args.y);
 	return createNewPoint; //signals that the click made a selection
 }
