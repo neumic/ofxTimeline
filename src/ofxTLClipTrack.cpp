@@ -36,7 +36,7 @@
 #include "ofSystemUtils.h"
 
 ofxTLClip::ofxTLClip(){
-   selected = true;
+   selected = false;
    movedSinceUpdate = true;
    filePath = "";
    fileName = "No File Loaded";
@@ -100,9 +100,17 @@ string ofxTLClip::getFileName(){
    return fileName;
 }
 
+void ofxTLClip::storeXml( ofxXmlSettings* savedClips ){
+   //Doesn't write outer "clip" tags so subclasses can easily extend
+   savedClips -> addValue("timeBegin", 
+         ofxTimecode::timecodeForMillis(timeRange.min));
+   savedClips -> addValue("timeEnd",
+         ofxTimecode::timecodeForMillis(timeRange.max));
+   savedClips -> addValue("filepath", getFilePath());
+}
 
 ofxTLClipTrack::ofxTLClipTrack(){
-	
+   xmlFileName = "_ClipTrack.xml";
 }
 
 ofxTLClipTrack::~ofxTLClipTrack(){
@@ -333,6 +341,7 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
       if( createNewPoint ){
          selectedClip = newClip();
          //newpoint.value = ofMap(args.y, bounds.getMinY(), bounds.getMaxY(), 0, 1.0);
+         selectedClip -> select();
          selectedClip -> timeRange = ofLongRange(millis, millis + 10000);
          clips.push_back(selectedClip);
          drawingModalBox = true;
@@ -455,7 +464,21 @@ void ofxTLClipTrack::pasteSent(string pasteboard){
 //for undo and redo you can implement a way of
 //reperesnt your whole track as XML
 string ofxTLClipTrack::getXMLRepresentation(){
-	return "";
+	ofxXmlSettings savedClips;
+	savedClips.addTag("clipTrack");
+	savedClips.pushTag("clipTrack");
+
+	for(int i = 0; i < clips.size(); i++){
+      savedClips.addTag("clip");
+      savedClips.pushTag("clip", i);
+      clips[i] -> storeXml(&savedClips);
+      savedClips.popTag(); //"clip"
+	}
+
+	savedClips.popTag();//"clipTrack"
+	string str;
+	savedClips.copyXmlToString(str);
+	return str;
 }
 
 void ofxTLClipTrack::loadFromXMLRepresentation(string rep){
@@ -465,10 +488,38 @@ void ofxTLClipTrack::loadFromXMLRepresentation(string rep){
 //serialize your track.
 //use ofxTLTrack's string xmlFileName
 void ofxTLClipTrack::save(){
+   string xmlRep = getXMLRepresentation();
+   ofxXmlSettings savedkeyframes;
+   savedkeyframes.loadFromBuffer(xmlRep);
+   savedkeyframes.saveFile(xmlFileName);
 	
 }
 
 void ofxTLClipTrack::load(){
+   ofxXmlSettings savedClips;
+   if(!savedClips.loadFile(xmlFileName)){
+      ofLog(OF_LOG_NOTICE, "ofxTLClipTrack --- couldn't load xml file " + xmlFileName);
+      return;
+   }
+
+   savedClips.pushTag("clipTrack");
+   int numKeyTags = savedClips.getNumTags("clip");
+   for(int i = 0; i < numKeyTags; i++){
+      savedClips.pushTag("clip", i);
+      ofxTLClip* clip = newClip();
+      
+      string timecode = savedClips.getValue("timeBegin", "00:00:00:000");
+      clip -> timeRange.min = timeline->getTimecode().millisForTimecode(timecode);
+      timecode = savedClips.getValue("timeEnd", "00:00:00:000");
+      clip -> timeRange.max = timeline->getTimecode().millisForTimecode(timecode);
+      clip -> loadFile( savedClips.getValue("filepath", "") );
+      savedClips.popTag(); //clip
+      clips.push_back( clip );
+   }
+   
+   savedClips.popTag(); //clipTrack
+
+   timeline->flagTrackModified(this);
 	
 }
 

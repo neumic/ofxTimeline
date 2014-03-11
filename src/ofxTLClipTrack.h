@@ -51,6 +51,7 @@ class ofxTLClip {
       virtual bool loadFile( string path );
       virtual string getFilePath();
       virtual string getFileName();
+      virtual void storeXml( ofxXmlSettings* savedClips );
 
       long grabTime;
       bool movedSinceUpdate;

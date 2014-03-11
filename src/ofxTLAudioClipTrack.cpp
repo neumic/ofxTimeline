@@ -157,6 +157,7 @@ void ofxTLAudioClip::recomputePreview( int width, ofFloatRange posVisRange){
 }
 
 ofxTLAudioClipTrack::ofxTLAudioClipTrack(){
+   xmlFileName = "_AudioClipTrack.xml";
 }
 
 ofxTLAudioClipTrack::~ofxTLAudioClipTrack(){
