@@ -84,6 +84,7 @@ class ofxTLClipTrack : public ofxTLTrack {
 	//draw your track contents. use ofRectangle bounds to know where to draw
 	//and the Track functions screenXToMillis() or millisToScreenX() to respect zoom
 	virtual void draw();
+   virtual void drawClip( ofxTLClip* clip );
    virtual void drawModalContent();
 
 

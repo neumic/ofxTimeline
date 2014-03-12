@@ -63,7 +63,7 @@ class ofxTLAudioClipTrack : public ofxTLClipTrack {
 	ofxTLAudioClipTrack();
 	virtual ~ofxTLAudioClipTrack();
 
-	virtual void draw();
+	virtual void drawClip(ofxTLClip* clip);
 
 	virtual string getTrackType();
 

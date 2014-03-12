@@ -172,49 +172,32 @@ ofxTLAudioClipTrack::~ofxTLAudioClipTrack(){
 	
 }
 
-void ofxTLAudioClipTrack::draw(){
-	
-	//this is just a simple example
-	ofPushStyle();
-	ofNoFill();
+void ofxTLAudioClipTrack::drawClip( ofxTLClip* clip ){
+   ofxTLClipTrack::drawClip( clip );
+   ofxTLAudioClip* audioClip = (ofxTLAudioClip*)clip;
+
+   float boxStart = millisToScreenX(clip -> timeRange.min);
+   float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
    ofLongRange screenRange( screenXToMillis( bounds.x ), screenXToMillis( bounds.x + bounds.width ) );
+   if( audioClip->fileLoaded ){
+      ofSetColor(ofColor( 50, 50, 50, 50 ));
+      if(audioClip->shouldRecomputePreview || viewIsDirty){
+         audioClip->recomputePreview(boxWidth, audioClip -> timeRange - screenRange );
+      }
 
-   ofxTLAudioClip* clip;
-	for(int i = 0; i < clips.size(); i++){
-      clip = (ofxTLAudioClip*)clips[i];
-		float boxStart = millisToScreenX(clip -> timeRange.min);
-		float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
-		if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
-         if( clip -> isSelected() ){
-            ofSetColor(timeline->getColors().textColor);
-         } else {
-            ofSetColor(timeline->getColors().keyColor);
-         }
-         ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
-		}
-      if( clip->fileLoaded ){
-         ofSetColor(ofColor( 50, 50, 50, 50 ));
-         if(clip->shouldRecomputePreview || viewIsDirty){
-            clip->recomputePreview(boxWidth, clip -> timeRange - screenRange );
-         }
-
-         for(int j = 0; j < clip->previews.size(); j++){
-            ofPushMatrix();
-            ofTranslate( boxStart, bounds.y, 0);
-            ofScale( 1, bounds.height/100, 1 );
-            clip->previews[j].draw();
-            ofPopMatrix();
-         }
+      for(int j = 0; j < audioClip->previews.size(); j++){
+         ofPushMatrix();
+         ofTranslate( boxStart, bounds.y, 0);
+         ofScale( 1, bounds.height/100, 1 );
+         audioClip->previews[j].draw();
+         ofPopMatrix();
       }
    }
-   ofPopStyle();
 }
-
 
 string ofxTLAudioClipTrack::getTrackType(){
 	return "AudioClipTrack";
 }
-
 
 ofxTLClip* ofxTLAudioClipTrack::newClip(){
    return new ofxTLAudioClip();

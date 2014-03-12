@@ -170,25 +170,28 @@ void ofxTLClipTrack::update(){
 //draw your track contents. use ofRectangle bounds to know where to draw
 //and the Track functions screenXToMillis() or millisToScreenX() to respect zoom
 void ofxTLClipTrack::draw(){
-	
-	//this is just a simple example
 	ofPushStyle();
 	ofNoFill();
 	for(int i = 0; i < clips.size(); i++){
-		float boxStart = millisToScreenX(clips[i] -> timeRange.min);
-		float boxWidth = millisToScreenX(clips[i] -> timeRange.max) - millisToScreenX(clips[i] -> timeRange.min);
-		if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
-			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
-			//ofCircle(screenX, bounds.getMinY() + 10, 4);
-         if( clips[i] -> isSelected() ){
-            ofSetColor(timeline->getColors().textColor);
-         } else {
-            ofSetColor(timeline->getColors().keyColor);
-         }
-         ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
-		}
+      drawClip( clips[i] );
 	}
 }
+
+void ofxTLClipTrack::drawClip( ofxTLClip* clip ){
+   float boxStart = millisToScreenX(clip -> timeRange.min);
+   float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
+   if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
+      //float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
+      //ofCircle(screenX, bounds.getMinY() + 10, 4);
+      if( clip -> isSelected() ){
+         ofSetColor(timeline->getColors().textColor);
+      } else {
+         ofSetColor(timeline->getColors().keyColor);
+      }
+      ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
+   }
+}
+
 
 void ofxTLClipTrack::drawModalContent(){
    if(drawingModalBox){
