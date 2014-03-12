@@ -40,6 +40,7 @@ ofxTLAudioClip::ofxTLAudioClip() {
    lastFFTPosition = -1;
    defaultSpectrumBandwidth = 1024;
    shouldRecomputePreview = true;
+   playerOffset = 0;
 }
 
 void ofxTLAudioClip::play(){
@@ -56,7 +57,7 @@ void ofxTLAudioClip::stop(){
 
 void ofxTLAudioClip::setPosition( long millis ){
    if( fileLoaded ){
-      player.setPositionMS( millis - timeRange.min );
+      player.setPositionMS( millis - timeRange.min + playerOffset );
    }
 }
 
@@ -81,26 +82,34 @@ bool ofxTLAudioClip::loadFile( string path ){
    return false;
 }
 
-void ofxTLAudioClip::recomputePreview( int width, ofFloatRange posVisRange){
+void ofxTLAudioClip::recomputePreview( int pixelWidth, ofLongRange previewRange){
    previews.clear();
-   if( width < 5 ){
+   if( pixelWidth < 5 ){
       return;
    }
 
+   //change this to be a less arbitrary range (0-1?)
    float trackHeight = 100/(1+player.getNumChannels());
+
    int numChannels = player.getNumChannels();
    vector<short> & buffer  = player.getBuffer();
    int numSamples = buffer.size() / numChannels;
-   int frameSize = (numSamples * posVisRange.span()) / width;
+   int frameSize = 
+      (numSamples * timeRange.span() / previewRange.span()) / pixelWidth;
    int stepSize  = 2 + (frameSize / 60);//this number is magic. It seems about right
+
+   //Range between 0.0-1.0 of the player that we are previewing
+   ofFloatRange positionRange = ofFloatRange(
+      ofMap( previewRange.min, timeRange.min + playerOffset, timeRange.max + playerOffset, 0.0, 1.0 ),
+      ofMap( previewRange.max, timeRange.min + playerOffset, timeRange.max + playerOffset, 0.0, 1.0 ) );
 
    for(int c = 0; c < numChannels; c++){
       ofPolyline preview;
       int lastFrameIndex = 0;
       float trackCenter = trackHeight * (c+1);
-      preview.resize(width*2);
-      for(int i = 0; i < width; i++){
-         float pointInTrack = ofMap( i, 0, width, posVisRange.min, posVisRange.max );
+      preview.resize(pixelWidth*2);
+      for(int i = 0; i < pixelWidth; i++){
+         float pointInTrack = ofMap( i, 0, pixelWidth, positionRange.min, positionRange.max );
 
          ofPoint * vertex = & preview.getVertices()[ i * 2 ];
 
@@ -169,6 +178,7 @@ void ofxTLAudioClipTrack::draw(){
 	//this is just a simple example
 	ofPushStyle();
 	ofNoFill();
+   ofLongRange screenRange( screenXToMillis( bounds.x ), screenXToMillis( bounds.x + bounds.width ) );
 
    ofxTLAudioClip* clip;
 	for(int i = 0; i < clips.size(); i++){
@@ -176,8 +186,6 @@ void ofxTLAudioClipTrack::draw(){
 		float boxStart = millisToScreenX(clip -> timeRange.min);
 		float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
 		if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
-			//float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
-			//ofCircle(screenX, bounds.getMinY() + 10, 4);
          if( clip -> isSelected() ){
             ofSetColor(timeline->getColors().textColor);
          } else {
@@ -188,14 +196,12 @@ void ofxTLAudioClipTrack::draw(){
       if( clip->fileLoaded ){
          ofSetColor(ofColor( 50, 50, 50, 50 ));
          if(clip->shouldRecomputePreview || viewIsDirty){
-            clip->recomputePreview(boxWidth, ofFloatRange(0,1));
+            clip->recomputePreview(boxWidth, clip -> timeRange - screenRange );
          }
 
-         //draw preview
          for(int j = 0; j < clip->previews.size(); j++){
             ofPushMatrix();
             ofTranslate( boxStart, bounds.y, 0);
-            //ofScale(computedZoomBounds.span()/zoomBounds.span(), 1, 1);
             ofScale( 1, bounds.height/100, 1 );
             clip->previews[j].draw();
             ofPopMatrix();
