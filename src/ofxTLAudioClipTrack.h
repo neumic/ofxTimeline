@@ -43,7 +43,7 @@ class ofxTLAudioClip : public ofxTLClip {
       ofxTLAudioClip();
       virtual void play();
       virtual void stop();
-      virtual void setPosition( long millis );
+      virtual void setPlayerPosition( long millis );
       virtual void clampedMove( long millisOffset, long lower, long upper);
       virtual bool loadFile( string path );
 
@@ -52,8 +52,7 @@ class ofxTLAudioClip : public ofxTLClip {
       vector<ofPolyline> previews;
 
       bool fileLoaded;
-   private:
-      long playerOffset;
+   protected:
       float lastFFTPosition;
       int defaultSpectrumBandwidth;
       ofOpenALSoundPlayer_TimelineAdditions player;

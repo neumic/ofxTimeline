@@ -38,6 +38,7 @@
 ofxTLClip::ofxTLClip(){
    selected = false;
    movedSinceUpdate = true;
+   playerOffset = 0;
    filePath = "";
    fileName = "No File Loaded";
 }
@@ -66,8 +67,13 @@ void ofxTLClip::stop(){
    cerr << "Clip Stopped" << endl;
 }
 
-void ofxTLClip::setPosition( long millis ){
-   cerr << "Clip Position set to: " << millis - timeRange.min <<endl;
+void ofxTLClip::setClipPosition( long millis ){
+   //Set the position of the player from timeline milliseconds
+   setPlayerPosition( millis - timeRange.min - playerOffset );
+}
+
+void ofxTLClip::setPlayerPosition( long millis ){
+   cerr << "player Position set to: " << millis <<endl;
 }
 
 void ofxTLClip::clampedMove( long millisOffset, long lower, long upper ){
@@ -152,7 +158,7 @@ void ofxTLClipTrack::update(){
                (!clips[i] -> timeRange.contains( lastTimelinePoint ) ||
                  clips[i] -> movedSinceUpdate ) ){
          if( timeline->getIsPlaying() ){
-            clips[i] -> setPosition( thisTimelinePoint );
+            clips[i] -> setClipPosition( thisTimelinePoint );
             clips[i] -> play();
          }
       }
@@ -211,7 +217,7 @@ void ofxTLClipTrack::playbackStarted(ofxTLPlaybackEventArgs& args){
    ofxTLTrack::playbackStarted(args);
    for(int i = 0; i < clips.size(); i++){
       if( clips[i] -> timeRange.contains( currentTrackTime() ) ){
-         clips[i] -> setPosition( currentTrackTime() );
+         clips[i] -> setClipPosition( currentTrackTime() );
          clips[i] -> play();
       }
    }

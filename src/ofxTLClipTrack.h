@@ -45,7 +45,8 @@ class ofxTLClip {
       virtual void deselect();
       virtual void play();
       virtual void stop();
-      virtual void setPosition( long millis );
+      virtual void setClipPosition( long millis );
+      virtual void setPlayerPosition( long millis );
       virtual void clampedMove( long millisOffset, long lower, long upper);
       virtual void clampedGrabMove( long millisOffset, long lower, long upper);
       virtual bool loadFile( string path );
@@ -56,7 +57,8 @@ class ofxTLClip {
       long grabTime;
       bool movedSinceUpdate;
       ofLongRange timeRange;
-   private:
+   protected:
+      long playerOffset;
       bool selected; 
       string filePath;
       string fileName;

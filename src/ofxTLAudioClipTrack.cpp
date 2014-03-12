@@ -40,7 +40,6 @@ ofxTLAudioClip::ofxTLAudioClip() {
    lastFFTPosition = -1;
    defaultSpectrumBandwidth = 1024;
    shouldRecomputePreview = true;
-   playerOffset = 0;
 }
 
 void ofxTLAudioClip::play(){
@@ -55,9 +54,9 @@ void ofxTLAudioClip::stop(){
    }
 }
 
-void ofxTLAudioClip::setPosition( long millis ){
+void ofxTLAudioClip::setPlayerPosition( long millis ){
    if( fileLoaded ){
-      player.setPositionMS( millis - timeRange.min - playerOffset );
+      player.setPositionMS( millis );
    }
 }
 
