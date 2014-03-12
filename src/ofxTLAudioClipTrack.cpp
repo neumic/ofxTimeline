@@ -57,7 +57,7 @@ void ofxTLAudioClip::stop(){
 
 void ofxTLAudioClip::setPosition( long millis ){
    if( fileLoaded ){
-      player.setPositionMS( millis - timeRange.min + playerOffset );
+      player.setPositionMS( millis - timeRange.min - playerOffset );
    }
 }
 
