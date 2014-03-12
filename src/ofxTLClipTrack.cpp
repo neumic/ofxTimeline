@@ -184,11 +184,20 @@ void ofxTLClipTrack::drawClip( ofxTLClip* clip ){
       //float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
       //ofCircle(screenX, bounds.getMinY() + 10, 4);
       if( clip -> isSelected() ){
+         ofFill;
          ofSetColor(timeline->getColors().textColor);
+         //Draw handles
+         ofTriangle( boxStart,      bounds.y,
+                     boxStart + 10, bounds.y,
+                     boxStart,      bounds.y + 10 );
+         ofTriangle( boxStart + boxWidth,      bounds.y + bounds.height,
+                     boxStart + boxWidth - 10, bounds.y + bounds.height,
+                     boxStart + boxWidth,      bounds.y + bounds.height - 10 );
       } else {
          ofSetColor(timeline->getColors().keyColor);
       }
-      ofRect(boxStart, bounds.getMinY(), boxWidth, bounds.height );
+      clip -> displayRect = ofRectangle( boxStart, bounds.getMinY(), boxWidth, bounds.height );
+      ofRect( clip -> displayRect );
    }
 }
 
@@ -262,6 +271,14 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 
    for( int i = 0; i < clips.size(); i++ ){
       if( clips[i] -> isInside( millis ) ){
+         if( (args.x - clips[i] -> displayRect.getLeft() ) + 
+             (args.y - clips[i] -> displayRect.getTop() ) <= 10){
+            cerr << "clicked in upper left handle" << endl;
+         }
+         else if( (clips[i] -> displayRect.getRight() - args.x) + 
+                  (clips[i] -> displayRect.getBottom() - args.y) <= 10){
+            cerr << "clicked in bottom right handle" << endl;
+         }
          shouldUnselectAll = false;
          createNewPoint = false;
          selectedClip = clips[i];

@@ -57,6 +57,7 @@ class ofxTLClip {
       long grabTime;
       bool movedSinceUpdate;
       ofLongRange timeRange;
+      ofRectangle displayRect;
    protected:
       long playerOffset;
       bool selected; 
