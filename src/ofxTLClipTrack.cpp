@@ -245,9 +245,7 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 	}
 
    for( int i = 0; i < clips.size(); i++ ){
-      if( clips[i] -> isSelected() ){
-         clips[i] -> grabTime = clips[i] -> timeRange.min;
-      }
+      clips[i] -> grabTime = clips[i] -> timeRange.min;
    }
    grabTime = millis;
 	createNewPoint = isActive();
