@@ -47,7 +47,7 @@ class ofxTLAudioClip : public ofxTLClip {
       virtual void clampedMove( long millisOffset, long lower, long upper);
       virtual bool loadFile( string path );
 
-      virtual void recomputePreview( int pixelWidth, ofLongRange previewRange);
+      virtual void recomputePreview( ofLongRange previewRange);
       bool shouldRecomputePreview;
       vector<ofPolyline> previews;
 

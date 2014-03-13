@@ -37,10 +37,13 @@
 
 ofxTLClip::ofxTLClip(){
    selected = false;
+   hovering = false;
    movedSinceUpdate = true;
    playerOffset = 0;
    filePath = "";
    fileName = "No File Loaded";
+   draggingStart = false;
+   draggingEnd = false;
 }
 
 bool ofxTLClip::isInside( long millis ){
@@ -104,6 +107,18 @@ string ofxTLClip::getFilePath(){
 
 string ofxTLClip::getFileName(){
    return fileName;
+}
+
+void ofxTLClip::beginHover(){
+   hovering = true;
+}
+
+void ofxTLClip::endHover(){
+   hovering = false;
+}
+
+bool ofxTLClip::isHovering(){
+   return hovering;
 }
 
 void ofxTLClip::storeXml( ofxXmlSettings* savedClips ){
@@ -178,26 +193,29 @@ void ofxTLClipTrack::draw(){
 }
 
 void ofxTLClipTrack::drawClip( ofxTLClip* clip ){
-   float boxStart = millisToScreenX(clip -> timeRange.min);
-   float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
-   if(boxStart + boxWidth > bounds.x && boxStart < bounds.x+bounds.width){
-      //float screenY = ofMap(clickPoints[i].value, 0.0, 1.0, bounds.getMinY(), bounds.getMaxY());
-      //ofCircle(screenX, bounds.getMinY() + 10, 4);
+   clip -> displayRect = ofRectangle( millisToScreenX(clip -> timeRange.min),
+           bounds.getMinY(),
+           millisToScreenX(clip -> timeRange.max) - 
+              millisToScreenX(clip -> timeRange.min),
+           bounds.height );
+   if(clip->displayRect.getRight() > bounds.x && 
+      clip->displayRect.getLeft() < bounds.x+bounds.width){
       if( clip -> isSelected() ){
          ofFill;
          ofSetColor(timeline->getColors().textColor);
-         //Draw handles
-         ofTriangle( boxStart,      bounds.y,
-                     boxStart + 10, bounds.y,
-                     boxStart,      bounds.y + 10 );
-         ofTriangle( boxStart + boxWidth,      bounds.y + bounds.height,
-                     boxStart + boxWidth - 10, bounds.y + bounds.height,
-                     boxStart + boxWidth,      bounds.y + bounds.height - 10 );
       } else {
          ofSetColor(timeline->getColors().keyColor);
       }
-      clip -> displayRect = ofRectangle( boxStart, bounds.getMinY(), boxWidth, bounds.height );
       ofRect( clip -> displayRect );
+      //Draw handles
+      if( clip -> isHovering() && !ofGetModifierSelection() ){
+         ofTriangle( clip->displayRect.getLeft(),      bounds.y,
+                     clip->displayRect.getLeft() + 10, bounds.y,
+                     clip->displayRect.getLeft(),      bounds.y + 10 );
+         ofTriangle( clip->displayRect.getRight(),      bounds.y + bounds.height,
+                     clip->displayRect.getRight() - 10, bounds.y + bounds.height,
+                     clip->displayRect.getRight(),      bounds.y + bounds.height - 10 );
+      }
    }
 }
 
@@ -271,14 +289,6 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 
    for( int i = 0; i < clips.size(); i++ ){
       if( clips[i] -> isInside( millis ) ){
-         if( (args.x - clips[i] -> displayRect.getLeft() ) + 
-             (args.y - clips[i] -> displayRect.getTop() ) <= 10){
-            cerr << "clicked in upper left handle" << endl;
-         }
-         else if( (clips[i] -> displayRect.getRight() - args.x) + 
-                  (clips[i] -> displayRect.getBottom() - args.y) <= 10){
-            cerr << "clicked in bottom right handle" << endl;
-         }
          shouldUnselectAll = false;
          createNewPoint = false;
          selectedClip = clips[i];
@@ -287,6 +297,20 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
             if( !clips[i] -> isSelected() ){
                timeline->unselectAll();
                clips[i] -> select();
+            }
+            if( (args.x - clips[i] -> displayRect.getLeft() ) + 
+                (args.y - clips[i] -> displayRect.getTop() ) <= 10){
+               cerr << "clicked in upper left handle" << endl;
+               timeline->unselectAll();
+               clips[i] -> select();
+               clips[i] -> draggingStart = true;
+            }
+            else if( (clips[i] -> displayRect.getRight() - args.x) + 
+                     (clips[i] -> displayRect.getBottom() - args.y) <= 10){
+               cerr << "clicked in bottom right handle" << endl;
+               timeline->unselectAll();
+               clips[i] -> select();
+               clips[i] -> draggingEnd = true;
             }
          }
          else {
@@ -328,13 +352,29 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 }
 
 void ofxTLClipTrack::mouseMoved(ofMouseEventArgs& args, long millis){
-	
+   for( int i = 0; i < clips.size(); i++ ){
+      if( clips[i] -> displayRect.inside( args.x, args.y ) ){
+         clips[i] -> beginHover();
+      }
+      else{
+         clips[i] -> endHover();
+      }
+   }
 }
 void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    if( isDraggingClips ){
    //if click was initiated without shift pressed
       for( int i = 0; i < clips.size(); i++ ){
-         if( clips[i] -> isSelected() ){
+         if( clips[i] -> draggingStart ){
+            clips[i] -> timeRange.min = millis;
+            clips[i] -> playerOffset  =  clips[i]->grabTime - millis;
+            clips[i] -> clampedMove( 0, 0, timeline->getDurationInMilliseconds() );
+         }
+         else if( clips[i] -> draggingEnd ){
+            clips[i] -> timeRange.max = millis;
+            clips[i] -> clampedMove( 0, 0, timeline->getDurationInMilliseconds() );
+         }
+         else if( clips[i] -> isSelected() ){
             clips[i] -> clampedGrabMove( millis - grabTime, 0, 
                                      timeline -> getDurationInMilliseconds() );
          }
@@ -384,6 +424,10 @@ void ofxTLClipTrack::mouseReleased(ofMouseEventArgs& args, long millis){
          }
       }
 	}
+   for( int i = 0; i < clips.size(); i++ ){
+      clips[i] -> draggingStart = false;
+      clips[i] -> draggingEnd = false;
+   }
 }
 
 bool clipIsSelected( ofxTLClip clip ){return clip.isSelected();}

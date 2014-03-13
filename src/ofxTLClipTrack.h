@@ -53,14 +53,20 @@ class ofxTLClip {
       virtual string getFilePath();
       virtual string getFileName();
       virtual void storeXml( ofxXmlSettings* savedClips );
+      virtual void beginHover();
+      virtual void endHover();
+      virtual bool isHovering();
 
       long grabTime;
+      long playerOffset;
       bool movedSinceUpdate;
+      bool draggingStart;
+      bool draggingEnd;
       ofLongRange timeRange;
       ofRectangle displayRect;
    protected:
-      long playerOffset;
       bool selected; 
+      bool hovering;
       string filePath;
       string fileName;
 };

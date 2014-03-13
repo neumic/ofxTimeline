@@ -81,8 +81,9 @@ bool ofxTLAudioClip::loadFile( string path ){
    return false;
 }
 
-void ofxTLAudioClip::recomputePreview( int pixelWidth, ofLongRange previewRange){
+void ofxTLAudioClip::recomputePreview(ofLongRange previewRange){
    previews.clear();
+   int pixelWidth = displayRect.width;
    if( pixelWidth < 5 ){
       return;
    }
@@ -99,8 +100,8 @@ void ofxTLAudioClip::recomputePreview( int pixelWidth, ofLongRange previewRange)
 
    //Range between 0.0-1.0 of the player that we are previewing
    ofFloatRange positionRange = ofFloatRange(
-      ofMap( previewRange.min, timeRange.min + playerOffset, timeRange.max + playerOffset, 0.0, 1.0 ),
-      ofMap( previewRange.max, timeRange.min + playerOffset, timeRange.max + playerOffset, 0.0, 1.0 ) );
+      ofMap( previewRange.min, timeRange.min + playerOffset, timeRange.min + player.getDuration() * 1000+ playerOffset, 0.0, 1.0 ),
+      ofMap( previewRange.max, timeRange.min + playerOffset, timeRange.min + player.getDuration() * 1000+ playerOffset, 0.0, 1.0 ) );
 
    for(int c = 0; c < numChannels; c++){
       ofPolyline preview;
@@ -176,18 +177,16 @@ void ofxTLAudioClipTrack::drawClip( ofxTLClip* clip ){
    ofxTLClipTrack::drawClip( clip );
    ofxTLAudioClip* audioClip = (ofxTLAudioClip*)clip;
 
-   float boxStart = millisToScreenX(clip -> timeRange.min);
-   float boxWidth = millisToScreenX(clip -> timeRange.max) - millisToScreenX(clip -> timeRange.min);
    ofLongRange screenRange( screenXToMillis( bounds.x ), screenXToMillis( bounds.x + bounds.width ) );
    if( audioClip->fileLoaded ){
       ofSetColor(ofColor( 50, 50, 50, 50 ));
       if(audioClip->shouldRecomputePreview || viewIsDirty){
-         audioClip->recomputePreview(boxWidth, audioClip -> timeRange - screenRange );
+         audioClip->recomputePreview( audioClip -> timeRange - screenRange );
       }
 
       for(int j = 0; j < audioClip->previews.size(); j++){
          ofPushMatrix();
-         ofTranslate( boxStart, bounds.y, 0);
+         ofTranslate( clip->displayRect.getLeft(), bounds.y, 0);
          ofScale( 1, bounds.height/100, 1 );
          audioClip->previews[j].draw();
          ofPopMatrix();
