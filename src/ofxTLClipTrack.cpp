@@ -80,7 +80,7 @@ void ofxTLClip::setPlayerPosition( long millis ){
 }
 
 long ofxTLClip::getPlayerDuration( ){
-   return 0;
+   return 10000;
 }
 
 void ofxTLClip::clampedMove( long millisOffset, long lower, long upper ){
@@ -99,17 +99,26 @@ void ofxTLClip::clampedGrabMove( long millisOffset, long lower, long upper ){
    clampedMove( millisOffset, lower, upper );
 }
 
-void ofxTLClip::clampedDragStart( long millis ){
-   if( millis > timeRange.min + playerOffset ){
-      timeRange.min = millis;
-      playerOffset  = grabPlayerOffset + grabTime - millis;
+void ofxTLClip::clampedDragStart( long millisOffset ){
+   if( grabPlayerOffset - millisOffset > 0){
+      millisOffset = -grabPlayerOffset;
    }
+   if( grabTime + millisOffset > timeRange.max){
+      millisOffset = timeRange.max - grabTime;
+   }
+   timeRange.min = millisOffset + grabTime;
+   playerOffset  = grabPlayerOffset - millisOffset;
 }
 
-void ofxTLClip::clampedDragEnd( long millis ){
-   if( millis < timeRange.min + playerOffset + getPlayerDuration() ){
-      timeRange.max = millis;
+void ofxTLClip::clampedDragEnd( long millisOffset ){
+//Note: millisOffset is from the begining of the clip
+   if( millisOffset > playerOffset + getPlayerDuration() ){
+      millisOffset = playerOffset + getPlayerDuration();
    }
+   if( millisOffset < 0 ){
+      millisOffset = 0;
+   }
+   timeRange.max = millisOffset;
 }
 
 bool ofxTLClip::loadFile( string path ){
@@ -384,10 +393,10 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    //if click was initiated without shift pressed
       for( int i = 0; i < clips.size(); i++ ){
          if( clips[i] -> draggingStart ){
-            clips[i] -> clampedDragStart( millis );
+            clips[i] -> clampedDragStart( millis - grabTime );
          }
          else if( clips[i] -> draggingEnd ){
-            clips[i] -> clampedDragEnd( millis );
+            clips[i] -> clampedDragEnd( millis - grabTime );
          }
          else if( clips[i] -> isSelected() ){
             clips[i] -> clampedGrabMove( millis - grabTime, 0, 

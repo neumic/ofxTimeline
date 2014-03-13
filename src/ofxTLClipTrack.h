@@ -50,8 +50,8 @@ class ofxTLClip {
       virtual long getPlayerDuration( );
       virtual void clampedMove( long millisOffset, long lower, long upper);
       virtual void clampedGrabMove( long millisOffset, long lower, long upper);
-      virtual void clampedDragStart( long millis );
-      virtual void clampedDragEnd( long millis );
+      virtual void clampedDragStart( long millisOffset );
+      virtual void clampedDragEnd( long millisOffset );
       virtual bool loadFile( string path );
       virtual string getFilePath();
       virtual string getFileName();
