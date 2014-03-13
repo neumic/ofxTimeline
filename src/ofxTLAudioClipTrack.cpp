@@ -70,12 +70,12 @@ void ofxTLAudioClip::clampedMove( long millisOffset, long lower, long upper){
 }
 
 void ofxTLAudioClip::clampedDragStart( long millisOffset ){
-   ofxTLClip::clampedDragStart( millis );
+   ofxTLClip::clampedDragStart( millisOffset );
    shouldRecomputePreview = true;
 }
 
-void ofxTLAudioClip::clampedDragEnd( long millis ){
-   ofxTLClip::clampedDragEnd( millis );
+void ofxTLAudioClip::clampedDragEnd( long millisOffset){
+   ofxTLClip::clampedDragEnd( millisOffset);
    shouldRecomputePreview = true;
 }
 

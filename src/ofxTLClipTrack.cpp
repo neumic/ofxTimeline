@@ -101,7 +101,7 @@ void ofxTLClip::clampedGrabMove( long millisOffset, long lower, long upper ){
 
 void ofxTLClip::clampedDragStart( long millisOffset ){
    if( grabPlayerOffset - millisOffset > 0){
-      millisOffset = -grabPlayerOffset;
+      millisOffset = grabPlayerOffset;
    }
    if( grabTime + millisOffset > timeRange.max){
       millisOffset = timeRange.max - grabTime;
@@ -111,14 +111,13 @@ void ofxTLClip::clampedDragStart( long millisOffset ){
 }
 
 void ofxTLClip::clampedDragEnd( long millisOffset ){
-//Note: millisOffset is from the begining of the clip
-   if( millisOffset > playerOffset + getPlayerDuration() ){
-      millisOffset = playerOffset + getPlayerDuration();
+   if( grabTime + millisOffset > timeRange.min + playerOffset + getPlayerDuration() ){
+      millisOffset = timeRange.min + playerOffset + getPlayerDuration() - grabTime;
    }
-   if( millisOffset < 0 ){
-      millisOffset = 0;
+   if( millisOffset < timeRange.min - grabTime ){
+      millisOffset = timeRange.min - grabTime;
    }
-   timeRange.max = millisOffset;
+   timeRange.max = grabTime + millisOffset;
 }
 
 bool ofxTLClip::loadFile( string path ){
@@ -235,10 +234,10 @@ void ofxTLClipTrack::drawClip( ofxTLClip* clip ){
       ofRect( clip -> displayRect );
       //Draw handles
       if( clip -> isHovering() && !ofGetModifierSelection() ){
-         ofTriangle( clip->displayRect.getLeft(),      bounds.y,
+         ofTriangle( clip->displayRect.getLeft() + 10, bounds.y,
                      clip->displayRect.getLeft() + 10, bounds.y,
                      clip->displayRect.getLeft(),      bounds.y + 10 );
-         ofTriangle( clip->displayRect.getRight(),      bounds.y + bounds.height,
+         ofTriangle( clip->displayRect.getRight() - 10, bounds.y + bounds.height,
                      clip->displayRect.getRight() - 10, bounds.y + bounds.height,
                      clip->displayRect.getRight(),      bounds.y + bounds.height - 10 );
       }
@@ -327,17 +326,17 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
             }
             if( (args.x - clips[i] -> displayRect.getLeft() ) + 
                 (args.y - clips[i] -> displayRect.getTop() ) <= 10){
-               cerr << "clicked in upper left handle" << endl;
                timeline->unselectAll();
                clips[i] -> select();
                clips[i] -> draggingStart = true;
             }
             else if( (clips[i] -> displayRect.getRight() - args.x) + 
                      (clips[i] -> displayRect.getBottom() - args.y) <= 10){
-               cerr << "clicked in bottom right handle" << endl;
                timeline->unselectAll();
                clips[i] -> select();
                clips[i] -> draggingEnd = true;
+               //I'd like to find a better way to get this to clampedDragEnd
+               clips[i] -> grabTime = clips[i] -> timeRange.max;
             }
          }
          else {

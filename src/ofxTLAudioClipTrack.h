@@ -47,7 +47,7 @@ class ofxTLAudioClip : public ofxTLClip {
       virtual long getPlayerDuration( );
       virtual void clampedMove( long millisOffset, long lower, long upper);
       virtual void clampedDragStart( long millisOffset );
-      virtual void clampedDragEnd( long millis );
+      virtual void clampedDragEnd( long millisOffset );
       virtual bool loadFile( string path );
 
       virtual void recomputePreview( ofLongRange previewRange);
