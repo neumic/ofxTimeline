@@ -79,6 +79,10 @@ void ofxTLClip::setPlayerPosition( long millis ){
    cerr << "player Position set to: " << millis <<endl;
 }
 
+long ofxTLClip::getPlayerDuration( ){
+   return 0;
+}
+
 void ofxTLClip::clampedMove( long millisOffset, long lower, long upper ){
    //Moves clip, but not past boundaries
    millisOffset = min( millisOffset, upper - timeRange.max );
@@ -93,6 +97,19 @@ void ofxTLClip::clampedGrabMove( long millisOffset, long lower, long upper ){
    //Moves clip begining to millis, but not past boundaries
    millisOffset = (grabTime + millisOffset) - timeRange.min;
    clampedMove( millisOffset, lower, upper );
+}
+
+void ofxTLClip::clampedDragStart( long millis ){
+   if( millis > timeRange.min + playerOffset ){
+      timeRange.min = millis;
+      playerOffset  = grabPlayerOffset + grabTime - millis;
+   }
+}
+
+void ofxTLClip::clampedDragEnd( long millis ){
+   if( millis < timeRange.min + playerOffset + getPlayerDuration() ){
+      timeRange.max = millis;
+   }
 }
 
 bool ofxTLClip::loadFile( string path ){
@@ -276,6 +293,7 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
 
    for( int i = 0; i < clips.size(); i++ ){
       clips[i] -> grabTime = clips[i] -> timeRange.min;
+      clips[i] -> grabPlayerOffset = clips[i] -> playerOffset;
    }
    grabTime = millis;
 	createNewPoint = isActive();
@@ -366,13 +384,10 @@ void ofxTLClipTrack::mouseDragged(ofMouseEventArgs& args, long millis){
    //if click was initiated without shift pressed
       for( int i = 0; i < clips.size(); i++ ){
          if( clips[i] -> draggingStart ){
-            clips[i] -> timeRange.min = millis;
-            clips[i] -> playerOffset  =  clips[i]->grabTime - millis;
-            clips[i] -> clampedMove( 0, 0, timeline->getDurationInMilliseconds() );
+            clips[i] -> clampedDragStart( millis );
          }
          else if( clips[i] -> draggingEnd ){
-            clips[i] -> timeRange.max = millis;
-            clips[i] -> clampedMove( 0, 0, timeline->getDurationInMilliseconds() );
+            clips[i] -> clampedDragEnd( millis );
          }
          else if( clips[i] -> isSelected() ){
             clips[i] -> clampedGrabMove( millis - grabTime, 0, 

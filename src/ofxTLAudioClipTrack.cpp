@@ -60,8 +60,22 @@ void ofxTLAudioClip::setPlayerPosition( long millis ){
    }
 }
 
+long ofxTLAudioClip::getPlayerDuration( ){
+   return player.getDuration() * 1000;
+}
+
 void ofxTLAudioClip::clampedMove( long millisOffset, long lower, long upper){
    ofxTLClip::clampedMove( millisOffset, lower, upper);
+   shouldRecomputePreview = true;
+}
+
+void ofxTLAudioClip::clampedDragStart( long millis ){
+   ofxTLClip::clampedDragStart( millis );
+   shouldRecomputePreview = true;
+}
+
+void ofxTLAudioClip::clampedDragEnd( long millis ){
+   ofxTLClip::clampedDragEnd( millis );
    shouldRecomputePreview = true;
 }
 
@@ -71,7 +85,7 @@ bool ofxTLAudioClip::loadFile( string path ){
       ofxTLClip::loadFile( path );
       player.getSpectrum(defaultSpectrumBandwidth);
       player.setLogAverages(88, 20); //magic numbers defaults from audioTrack
-      timeRange.setMax( timeRange.min + player.getDuration() *1000 );
+      timeRange.setMax( timeRange.min + getPlayerDuration() );
       fileLoaded = true;
       shouldRecomputePreview = true;
       movedSinceUpdate = true;
@@ -100,8 +114,8 @@ void ofxTLAudioClip::recomputePreview(ofLongRange previewRange){
 
    //Range between 0.0-1.0 of the player that we are previewing
    ofFloatRange positionRange = ofFloatRange(
-      ofMap( previewRange.min, timeRange.min + playerOffset, timeRange.min + player.getDuration() * 1000+ playerOffset, 0.0, 1.0 ),
-      ofMap( previewRange.max, timeRange.min + playerOffset, timeRange.min + player.getDuration() * 1000+ playerOffset, 0.0, 1.0 ) );
+      ofMap( previewRange.min, timeRange.min + playerOffset, timeRange.min + getPlayerDuration() + playerOffset, 0.0, 1.0 ),
+      ofMap( previewRange.max, timeRange.min + playerOffset, timeRange.min + getPlayerDuration() + playerOffset, 0.0, 1.0 ) );
 
    for(int c = 0; c < numChannels; c++){
       ofPolyline preview;

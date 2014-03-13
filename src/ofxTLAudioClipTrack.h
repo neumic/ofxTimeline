@@ -44,7 +44,10 @@ class ofxTLAudioClip : public ofxTLClip {
       virtual void play();
       virtual void stop();
       virtual void setPlayerPosition( long millis );
+      virtual long getPlayerDuration( );
       virtual void clampedMove( long millisOffset, long lower, long upper);
+      virtual void clampedDragStart( long millis );
+      virtual void clampedDragEnd( long millis );
       virtual bool loadFile( string path );
 
       virtual void recomputePreview( ofLongRange previewRange);

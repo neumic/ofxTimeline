@@ -47,8 +47,11 @@ class ofxTLClip {
       virtual void stop();
       virtual void setClipPosition( long millis );
       virtual void setPlayerPosition( long millis );
+      virtual long getPlayerDuration( );
       virtual void clampedMove( long millisOffset, long lower, long upper);
       virtual void clampedGrabMove( long millisOffset, long lower, long upper);
+      virtual void clampedDragStart( long millis );
+      virtual void clampedDragEnd( long millis );
       virtual bool loadFile( string path );
       virtual string getFilePath();
       virtual string getFileName();
@@ -58,6 +61,7 @@ class ofxTLClip {
       virtual bool isHovering();
 
       long grabTime;
+      long grabPlayerOffset;
       long playerOffset;
       bool movedSinceUpdate;
       bool draggingStart;
