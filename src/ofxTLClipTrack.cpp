@@ -156,6 +156,10 @@ void ofxTLClip::storeXml( ofxXmlSettings* savedClips ){
 }
 
 ofxTLClipTrack::ofxTLClipTrack(){
+   createNewPoint = false;
+   isDraggingClips = false;
+   clickedInModalBox = false;
+   drawingModalBox = false;
    xmlFileName = "_ClipTrack.xml";
 }
 
