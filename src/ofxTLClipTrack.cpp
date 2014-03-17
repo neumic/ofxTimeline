@@ -360,16 +360,10 @@ bool ofxTLClipTrack::mousePressed(ofMouseEventArgs& args, long millis){
    }
 
    if( selectedClip != NULL ){
-      //if we're in the first or last 20 secs of clip, snap to the closer edge,
-      //otherwise don't snap at all.
-      //TODO: This isn't very good, since there's no indication of when it's
-      //going to snap or not. Also, 20 sec is a variable number of pixels
-      if( grabTime <= selectedClip->timeRange.center() &&
-          grabTime <= selectedClip->timeRange.min + 20000){
+      if( args.x < selectedClip->displayRect.getLeft() + 10 ){
          timeline->setDragTimeOffset(grabTime - selectedClip->timeRange.min);
       }
-      else if( grabTime > selectedClip->timeRange.center() &&
-               grabTime > selectedClip->timeRange.max - 20000){
+      else if( args.x > selectedClip->displayRect.getRight() - 10 ){
          timeline->setDragTimeOffset(grabTime - selectedClip->timeRange.max);
       }
       else{
